@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: payments-flux
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/payment_db
+    username: postgres
+    password: secret
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
