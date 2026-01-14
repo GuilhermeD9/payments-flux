@@ -27,4 +27,7 @@ public class Wallet {
     private String password;
 
     private BigDecimal balance;
+
+    @Version
+    private long version;
 }
