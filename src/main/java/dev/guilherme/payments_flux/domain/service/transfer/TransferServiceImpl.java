@@ -1,6 +1,7 @@
 package dev.guilherme.payments_flux.domain.service.transfer;
 
 import dev.guilherme.payments_flux.api.dto.TransferDTO;
+import dev.guilherme.payments_flux.api.mapper.TransferMapper;
 import dev.guilherme.payments_flux.domain.entity.Transfer;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.api.exception.ServiceException;
@@ -10,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -17,29 +19,35 @@ public class TransferServiceImpl implements TransferService {
 
     private final TransferRepository transferRepository;
     private final WalletRepository walletRepository;
+    private final TransferMapper transferMapper;
 
     @Override
-    public Transfer create(TransferDTO transferDTO) {
-        Wallet reciver = walletRepository.findById(transferDTO.reciverId()).orElseThrow(
-                () -> new ServiceException("Wallet reciver with id %d not founded.".formatted(transferDTO.reciverId())));
+    public TransferDTO.Response create(TransferDTO.CreateRequest transferDTO) {
+        Wallet receiver = walletRepository.findById(transferDTO.receiverId()).orElseThrow(
+                () -> new ServiceException("Wallet receiver with id %d not found.".formatted(transferDTO.receiverId())));
         Wallet sender = walletRepository.findById(transferDTO.senderId()).orElseThrow(
-                () -> new ServiceException("Wallet sender with id %d not founded.".formatted(transferDTO.senderId())));
+                () -> new ServiceException("Wallet sender with id %d not found.".formatted(transferDTO.senderId())));
 
-        if (sender.getBalance().compareTo(transferDTO.value()) >= 0) {
-            sender.setBalance(sender.getBalance().subtract(transferDTO.value()));
-            reciver.setBalance(reciver.getBalance().add(transferDTO.value()));
+        if (sender.getBalance().compareTo(transferDTO.amount()) >= 0) {
+            sender.setBalance(sender.getBalance().subtract(transferDTO.amount()));
+            receiver.setBalance(receiver.getBalance().add(transferDTO.amount()));
         } else {
-            throw new ServiceException("Value for transfer not valid.");
+            throw new ServiceException("Insufficient balance for transfer.");
         }
 
-        Transfer newTransfer = new Transfer();
+        Transfer newTransfer = transferMapper.toEntity(transferDTO);
         newTransfer.setSender(sender);
-        newTransfer.setReceiver(reciver);
-        newTransfer.setAmount(transferDTO.value());
+        newTransfer.setReceiver(receiver);
         newTransfer.setCreatedAt(LocalDateTime.now());
 
-        transferRepository.save(newTransfer);
-
-        return newTransfer;
+        Transfer savedTransfer = transferRepository.save(newTransfer);
+        return transferMapper.toResponse(savedTransfer);
+    }
+    
+    @Override
+    public TransferDTO.Response findById(UUID id) {
+        Transfer transfer = transferRepository.findById(id)
+            .orElseThrow(() -> new ServiceException("Transfer not found"));
+        return transferMapper.toResponse(transfer);
     }
 }
