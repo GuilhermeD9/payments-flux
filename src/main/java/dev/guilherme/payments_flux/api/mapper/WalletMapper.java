@@ -5,12 +5,9 @@ import dev.guilherme.payments_flux.domain.entity.Wallet;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface WalletMapper {
-    
-    WalletMapper INSTANCE = Mappers.getMapper(WalletMapper.class);
     
     @Mapping(target = "password", ignore = true)
     WalletDTO.Response toResponse(Wallet wallet);
