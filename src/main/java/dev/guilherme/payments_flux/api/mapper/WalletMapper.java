@@ -8,8 +8,7 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface WalletMapper {
-    
-    @Mapping(target = "password", ignore = true)
+
     WalletDTO.Response toResponse(Wallet wallet);
     
     @Mapping(target = "id", ignore = true)
