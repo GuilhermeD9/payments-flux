@@ -1,11 +1,11 @@
-package dev.guilherme.payments_flux.service;
+package dev.guilherme.payments_flux.domain.service.transfer;
 
-import dev.guilherme.payments_flux.dto.TransferDTO;
-import dev.guilherme.payments_flux.entity.Transfer;
-import dev.guilherme.payments_flux.entity.Wallet;
-import dev.guilherme.payments_flux.exception.ServiceException;
-import dev.guilherme.payments_flux.repository.TransferRepository;
-import dev.guilherme.payments_flux.repository.WalletRepository;
+import dev.guilherme.payments_flux.api.dto.TransferDTO;
+import dev.guilherme.payments_flux.domain.entity.Transfer;
+import dev.guilherme.payments_flux.domain.entity.Wallet;
+import dev.guilherme.payments_flux.api.exception.ServiceException;
+import dev.guilherme.payments_flux.domain.repository.TransferRepository;
+import dev.guilherme.payments_flux.domain.repository.WalletRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

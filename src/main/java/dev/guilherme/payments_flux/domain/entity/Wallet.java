@@ -1,4 +1,4 @@
-package dev.guilherme.payments_flux.entity;
+package dev.guilherme.payments_flux.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

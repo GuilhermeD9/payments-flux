@@ -1,6 +1,6 @@
-package dev.guilherme.payments_flux.repository;
+package dev.guilherme.payments_flux.domain.repository;
 
-import dev.guilherme.payments_flux.entity.Transfer;
+import dev.guilherme.payments_flux.domain.entity.Transfer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

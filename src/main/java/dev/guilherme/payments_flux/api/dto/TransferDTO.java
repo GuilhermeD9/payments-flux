@@ -1,4 +1,4 @@
-package dev.guilherme.payments_flux.dto;
+package dev.guilherme.payments_flux.api.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
