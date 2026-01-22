@@ -1,5 +1,6 @@
 package dev.guilherme.payments_flux.api.dto;
 
+import dev.guilherme.payments_flux.core.validator.CpfCnpj;
 import jakarta.validation.constraints.*;
 import org.hibernate.validator.constraints.br.CNPJ;
 import org.hibernate.validator.constraints.br.CPF;
@@ -9,8 +10,8 @@ import java.math.BigDecimal;
 public record WalletDTO(
     Long id,
     @NotBlank String fullName,
-    @NotBlank @CPF @CNPJ String cpfCnpj,
-    @NotBlank @Email @Size(max = 40) String email,
+    @NotBlank @CpfCnpj String cpfCnpj,
+    @NotBlank @Email @Size(max = 120) String email,
     String password,
     @NotNull @DecimalMin("0.00") BigDecimal balance
 ) {
