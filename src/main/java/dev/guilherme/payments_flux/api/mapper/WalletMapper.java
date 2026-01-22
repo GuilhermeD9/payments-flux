@@ -16,8 +16,6 @@ public interface WalletMapper {
     Wallet toEntity(WalletDTO.CreateRequest request);
     
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "password", ignore = true)
-    @Mapping(target = "cpfCnpj", ignore = true)
-    @Mapping(target = "balance", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntity(WalletDTO.UpdateRequest request, @MappingTarget Wallet wallet);
 }

@@ -23,7 +23,10 @@ public record WalletDTO(
     
     public record UpdateRequest(
         @NotBlank String fullName,
-        @NotBlank @Email @Size(max = 40) String email
+        @NotBlank @CPFCNPJ String cpfCnpj,
+        @NotBlank @Email @Size(max = 120) String email,
+        @NotBlank @Size(min = 6) String password,
+        @NotNull @Positive BigDecimal balance
     ) {}
     
     public record Response(

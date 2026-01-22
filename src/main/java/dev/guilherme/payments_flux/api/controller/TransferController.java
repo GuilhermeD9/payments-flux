@@ -26,7 +26,7 @@ public class TransferController {
     }
 
     @GetMapping("/find/{id}")
-    public ResponseEntity<TransferDTO.Response> findById(@RequestParam UUID id) {
+    public ResponseEntity<TransferDTO.Response> findById(@PathVariable UUID id) {
         TransferDTO.Response response = transferService.findById(id);
         return ResponseEntity.ok(response);
     }

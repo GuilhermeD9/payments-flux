@@ -30,4 +30,12 @@ public class Wallet {
 
     @Version
     private long version;
+
+    @PrePersist
+    @PreUpdate
+    public void cleanDocs() {
+        if (this.cpfCnpj != null) {
+            this.cpfCnpj = this.cpfCnpj.replaceAll("\\D", "");
+        }
+    }
 }
