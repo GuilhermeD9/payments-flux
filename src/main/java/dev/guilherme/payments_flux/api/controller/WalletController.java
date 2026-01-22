@@ -29,4 +29,17 @@ public class WalletController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/update/{id}")
+    public ResponseEntity<WalletDTO.Response> update(@RequestParam Long id,
+                                                     @RequestBody @Valid WalletDTO.UpdateRequest walletDTO) {
+        WalletDTO.Response response = walletService.update(id, walletDTO);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> delete(@RequestParam Long id) {
+        walletService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
