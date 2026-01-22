@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 @Constraint(validatedBy = CpfCnpjValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CpfCnpj {
+public @interface CPFCNPJ {
     String message() default "Invalid CPF or CNPJ";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};

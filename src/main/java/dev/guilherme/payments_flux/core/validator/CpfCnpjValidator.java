@@ -1,22 +1,14 @@
 package dev.guilherme.payments_flux.core.validator;
 
+import br.com.caelum.stella.validation.InvalidStateException;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.hibernate.validator.internal.constraintvalidators.hv.br.CNPJValidator;
-import org.hibernate.validator.internal.constraintvalidators.hv.br.CPFValidator;
 import org.springframework.stereotype.Component;
+import br.com.caelum.stella.validation.CPFValidator;
+import br.com.caelum.stella.validation.CNPJValidator;
 
 @Component
-public class CpfCnpjValidator implements ConstraintValidator<CpfCnpj, String> {
-
-    private final CPFValidator cpfValidator = new CPFValidator();
-    private final CNPJValidator cnpjValidator = new CNPJValidator();
-
-    @Override
-    public void initialize(CpfCnpj constraintAnnotation) {
-        cpfValidator.initialize(null);
-        cnpjValidator.initialize(null);
-    }
+public class CpfCnpjValidator implements ConstraintValidator<CPFCNPJ, String> {
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
@@ -26,10 +18,16 @@ public class CpfCnpjValidator implements ConstraintValidator<CpfCnpj, String> {
 
         String cpfCnpj = value.replaceAll("[^0-9]", "");
 
-        if (cpfCnpj.length() == 11) {
-            return cpfValidator.isValid(cpfCnpj, context);
-        } else if (cpfCnpj.length() > 11) {
-            return cnpjValidator.isValid(cpfCnpj, context);
+        try {
+            if (cpfCnpj.length() == 11) {
+                new CPFValidator().assertValid(cpfCnpj);
+                return true;
+            } else if (cpfCnpj.length() > 11) {
+                new CNPJValidator().assertValid(cpfCnpj);
+                return true;
+            }
+        } catch (InvalidStateException e) {
+            return false;
         }
 
         return false;
