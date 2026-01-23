@@ -1,6 +1,7 @@
 package dev.guilherme.payments_flux.domain.service.wallet;
 
 import dev.guilherme.payments_flux.api.dto.WalletDTO;
+import dev.guilherme.payments_flux.api.exception.ResourceNotFoundException;
 import dev.guilherme.payments_flux.api.mapper.WalletMapper;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
@@ -32,14 +33,14 @@ public class WalletServiceImpl implements WalletService{
     @Override
     public WalletDTO.Response findById(Long id) {
         Wallet wallet = walletRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Wallet not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
         return walletMapper.toResponse(wallet);
     }
     
     @Override
     public WalletDTO.Response update(Long id, WalletDTO.UpdateRequest walletDTO) {
         Wallet wallet = walletRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Wallet not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
         
         walletMapper.updateEntity(walletDTO, wallet);
         
@@ -50,7 +51,7 @@ public class WalletServiceImpl implements WalletService{
     @Override
     public void delete(Long id) {
         if (!walletRepository.existsById(id)) {
-            throw new RuntimeException("Wallet not found");
+            throw new ResourceNotFoundException("Wallet not found", id);
         }
         walletRepository.deleteById(id);
     }

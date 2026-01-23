@@ -1,7 +1,8 @@
 package dev.guilherme.payments_flux.domain.service.transfer;
 
 import dev.guilherme.payments_flux.api.dto.TransferDTO;
-import dev.guilherme.payments_flux.api.exception.ServiceException;
+import dev.guilherme.payments_flux.api.exception.BusinessException;
+import dev.guilherme.payments_flux.api.exception.ResourceNotFoundException;
 import dev.guilherme.payments_flux.api.mapper.TransferMapper;
 import dev.guilherme.payments_flux.domain.entity.Transfer;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
@@ -24,17 +25,17 @@ public class TransferServiceImpl implements TransferService {
     @Override
     public TransferDTO.Response create(TransferDTO.CreateRequest transferDTO) {
         Wallet receiver = walletRepository.findById(transferDTO.receiverId()).orElseThrow(
-                () -> new ServiceException("Wallet receiver with id %d not found.".formatted(transferDTO.receiverId())));
+                () -> new ResourceNotFoundException("Wallet receiver with id %d not found.", transferDTO.receiverId()));
         Wallet sender = walletRepository.findById(transferDTO.senderId()).orElseThrow(
-                () -> new ServiceException("Wallet sender with id %d not found.".formatted(transferDTO.senderId())));
+                () -> new ResourceNotFoundException("Wallet sender with id %d not found.", transferDTO.senderId()));
 
         if (sender.getBalance().compareTo(transferDTO.amount()) >= 0) {
             sender.setBalance(sender.getBalance().subtract(transferDTO.amount()));
             receiver.setBalance(receiver.getBalance().add(transferDTO.amount()));
         } else if (sender.getId().equals(receiver.getId())) {
-            throw new ServiceException("The transferency is not be finished.");
+            throw new BusinessException("The transferency is not be finished.");
         } else {
-            throw new ServiceException("Insufficient balance for transfer.");
+            throw new BusinessException("Insufficient balance for transfer.");
         }
 
         Transfer newTransfer = transferMapper.toEntity(transferDTO);
@@ -49,7 +50,7 @@ public class TransferServiceImpl implements TransferService {
     @Override
     public TransferDTO.Response findById(UUID id) {
         Transfer transfer = transferRepository.findById(id)
-            .orElseThrow(() -> new ServiceException("Transfer not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Transfer not found", id));
         return transferMapper.toResponse(transfer);
     }
 }
