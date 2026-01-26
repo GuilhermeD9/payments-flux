@@ -13,6 +13,7 @@ public interface WalletMapper {
     
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "balance", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Wallet toEntity(WalletDTO.CreateRequest request);
     
     @Mapping(target = "id", ignore = true)

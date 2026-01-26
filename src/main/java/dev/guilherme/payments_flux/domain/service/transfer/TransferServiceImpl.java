@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-public class TransferServiceImpl implements TransferService {
+public class  TransferServiceImpl implements TransferService {
 
     private final TransferRepository transferRepository;
     private final WalletRepository walletRepository;
@@ -29,11 +29,13 @@ public class TransferServiceImpl implements TransferService {
         Wallet sender = walletRepository.findById(transferDTO.senderId()).orElseThrow(
                 () -> new ResourceNotFoundException("Wallet sender with id %d not found.", transferDTO.senderId()));
 
+        if (sender.getId().equals(receiver.getId())) {
+            throw new BusinessException("The transferency is not be finished.");
+        }
+
         if (sender.getBalance().compareTo(transferDTO.amount()) >= 0) {
             sender.setBalance(sender.getBalance().subtract(transferDTO.amount()));
             receiver.setBalance(receiver.getBalance().add(transferDTO.amount()));
-        } else if (sender.getId().equals(receiver.getId())) {
-            throw new BusinessException("The transferency is not be finished.");
         } else {
             throw new BusinessException("Insufficient balance for transfer.");
         }
