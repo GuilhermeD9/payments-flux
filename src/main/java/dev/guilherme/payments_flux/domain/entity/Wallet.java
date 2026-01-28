@@ -2,13 +2,15 @@ package dev.guilherme.payments_flux.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Data
 @Entity
 @Table(name = "tb_wallet")
+@Data @AllArgsConstructor @NoArgsConstructor
 public class Wallet {
 
     @Id

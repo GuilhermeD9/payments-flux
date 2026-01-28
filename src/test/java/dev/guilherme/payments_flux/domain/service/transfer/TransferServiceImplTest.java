@@ -9,9 +9,11 @@ import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.domain.repository.TransferRepository;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -57,71 +59,48 @@ public class TransferServiceImplTest {
 
 
     @Nested
-    class SuccessCases {
+    class CreateTransfer {
         @Test
-        void createTransferWithValidDataShouldReturnTransferResponse() {
-            TransferDTO.CreateRequest createRequestDTO = new TransferDTO.CreateRequest(senderId, receiverId, amount);
+        @DisplayName("Should create transfer with valid data and return response")
+        void shouldCreateTransferWithValidDataAndReturnResponse() {
+            var requestDTO = new TransferDTO.CreateRequest(senderId, receiverId, amount);
+
+            sender = new Wallet();
             sender.setId(senderId);
             sender.setBalance(BigDecimal.valueOf(500));
+
+            receiver = new Wallet();
             receiver.setId(receiverId);
             receiver.setBalance(BigDecimal.valueOf(300));
 
-            Transfer savedTransfer = new Transfer();
-            savedTransfer.setId(UUID.randomUUID());
-            savedTransfer.setSender(sender);
-            savedTransfer.setReceiver(receiver);
-            savedTransfer.setAmount(amount);
-            savedTransfer.setCreatedAt(LocalDateTime.now());
+            Transfer transferEntity = new Transfer();
+            transferEntity.setAmount(amount);
 
-            TransferDTO.Response expectedResponse = new TransferDTO.Response(
-                    savedTransfer.getId(), senderId, receiverId, amount, savedTransfer.getCreatedAt()
-            );
+            when(walletRepository.findById(senderId)).thenReturn(Optional.of(sender));
+            when(walletRepository.findById(receiverId)).thenReturn(Optional.of(receiver));
+            when(transferMapper.toEntity(requestDTO)).thenReturn(transferEntity);
+            when(transferRepository.save(any())).thenReturn(new Transfer(
+                    UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now()));
+            when(transferMapper.toResponse(any())).thenReturn(new TransferDTO.Response(
+                    UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now()));
 
-            when(walletRepository.findById(createRequestDTO.senderId())).thenReturn(Optional.of(sender));
-            when(walletRepository.findById(createRequestDTO.receiverId())).thenReturn(Optional.of(receiver));
-            when(transferMapper.toEntity(createRequestDTO)).thenReturn(savedTransfer);
-            when(transferRepository.save(any(Transfer.class))).thenReturn(savedTransfer);
-            when(transferMapper.toResponse(savedTransfer)).thenReturn(expectedResponse);
-
-            TransferDTO.Response response = transferService.create(createRequestDTO);
+            var response = transferService.create(requestDTO);
 
             assertNotNull(response);
-            assertEquals(expectedResponse.id(), response.id());
-            assertNotEquals(BigDecimal.valueOf(300), receiver.getBalance());
-            assertNotEquals(BigDecimal.valueOf(400), sender.getBalance());
+            ArgumentCaptor<Transfer> transferCaptor = ArgumentCaptor.forClass(Transfer.class);
+            verify(transferRepository).save(transferCaptor.capture());
+            assertEquals(amount, transferCaptor.getValue().getAmount());
+
+            verify(walletRepository, never()).save(any());
+            assertEquals(0, sender.getBalance().compareTo(BigDecimal.valueOf(400)),
+                    "Sender balance should be updated");
+            assertEquals(0, receiver.getBalance().compareTo(BigDecimal.valueOf(400)),
+                    "Receiver balance should be updated");
         }
 
         @Test
-        void findTransferByIdShouldReturnTransferResponse() {
-            UUID transferId = UUID.randomUUID();
-
-            Transfer transfer = new Transfer();
-            transfer.setId(transferId);
-            transfer.setSender(sender);
-            transfer.setReceiver(receiver);
-            transfer.setAmount(amount);
-            transfer.setCreatedAt(LocalDateTime.now());
-
-            TransferDTO.Response expectedResponse = new TransferDTO.Response(
-                    transferId, senderId, receiverId, amount, transfer.getCreatedAt()
-            );
-
-            when(transferRepository.findById(transferId)).thenReturn(Optional.of(transfer));
-            when(transferMapper.toResponse(transfer)).thenReturn(expectedResponse);
-
-            TransferDTO.Response response = transferService.findById(transferId);
-
-            assertNotNull(response);
-            assertEquals(expectedResponse.id(), response.id());
-            verify(transferRepository).findById(transferId);
-            verify(transferMapper).toResponse(transfer);
-        }
-    }
-
-    @Nested
-    class FailureCases {
-        @Test
-        void createTransferWithInsufficientBalanceShouldThrowBusinessException() {
+        @DisplayName("Should throw BusinessException when insufficient balance")
+        void shouldThrowBusinessExcpetionWhenInsufficientBalance() {
             BigDecimal insufficientAmount = new BigDecimal("1000.00");
             TransferDTO.CreateRequest createRequestDTO = new TransferDTO.CreateRequest(senderId, receiverId, insufficientAmount);
 
@@ -142,7 +121,8 @@ public class TransferServiceImplTest {
         }
 
         @Test
-        void createTransferWithSameIdShouldThrowBusinessException() {
+        @DisplayName("Should throw BusinessException when transferring to same wallet")
+        void shouldThrowBusinessExceptionWhenTransferringToSameWallet() {
             TransferDTO.CreateRequest createRequestDTO = new TransferDTO.CreateRequest(receiverId, receiverId, amount);
 
             Wallet wallet = new Wallet();
@@ -159,9 +139,28 @@ public class TransferServiceImplTest {
             assertEquals("The transferency is not be finished.", exception.getMessage());
             verify(transferRepository, never()).save(any());
         }
+    }
+
+    @Nested
+    class FindTransferById {
+        @Test
+        @DisplayName("Should find transfer by ID and return response")
+        void shouldFindTransferByIdAndReturnResponse() {
+            var id = UUID.randomUUID();
+            var expectedResponse = new TransferDTO.Response(id, senderId, receiverId, amount, LocalDateTime.now());
+
+            when(transferRepository.findById(id)).thenReturn(Optional.of(new Transfer()));
+            when(transferMapper.toResponse(any())).thenReturn(expectedResponse);
+
+            var response = transferService.findById(id);
+
+            assertEquals(expectedResponse, response);
+            verify(transferRepository).findById(id);
+        }
 
         @Test
-        void findTransferByIdWhetNotFoundShouldThrowResourceNotFoundEx() {
+        @DisplayName("Should throw ResourceNotFoundException when transfer not found")
+        void shouldThrowResourceNotFoundExceptionWhenTransferNotFound() {
             UUID transferId = UUID.randomUUID();
 
             when(transferRepository.findById(transferId)).thenReturn(Optional.empty());
