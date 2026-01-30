@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @Validated
 @RequestMapping(value = "v1/api/wallet")
@@ -27,6 +29,11 @@ public class WalletController {
     public ResponseEntity<WalletDTO.Response> findById(@PathVariable Long id) {
         WalletDTO.Response response = walletService.findById(id);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/findAll")
+    public ResponseEntity<List<WalletDTO.Response>> findAll() {
+        return ResponseEntity.ok(walletService.findAll());
     }
 
     @PutMapping("/update/{id}")

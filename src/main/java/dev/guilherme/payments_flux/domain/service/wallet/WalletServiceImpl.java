@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -37,7 +38,12 @@ public class WalletServiceImpl implements WalletService {
             .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
         return walletMapper.toResponse(wallet);
     }
-    
+
+    @Override
+    public List<WalletDTO.Response> findAll() {
+        return walletRepository.findAll().stream().map(walletMapper::toResponse).toList();
+    }
+
     @Override
     public WalletDTO.Response update(Long id, WalletDTO.UpdateRequest walletDTO) {
         Wallet wallet = walletRepository.findById(id)

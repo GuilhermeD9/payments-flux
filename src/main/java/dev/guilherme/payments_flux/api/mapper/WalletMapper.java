@@ -18,5 +18,6 @@ public interface WalletMapper {
     
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "version", ignore = true)
+    @Mapping(target = "balance", ignore = true)
     void updateEntity(WalletDTO.UpdateRequest request, @MappingTarget Wallet wallet);
 }

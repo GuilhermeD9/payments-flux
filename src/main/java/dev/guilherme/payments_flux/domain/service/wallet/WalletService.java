@@ -3,12 +3,16 @@ package dev.guilherme.payments_flux.domain.service.wallet;
 import dev.guilherme.payments_flux.api.dto.WalletDTO;
 import jakarta.transaction.Transactional;
 
+import java.util.List;
+
 public interface WalletService {
 
     @Transactional
     WalletDTO.Response create(WalletDTO.CreateRequest walletDTO);
     
     WalletDTO.Response findById(Long id);
+
+    List<WalletDTO.Response> findAll();
 
     @Transactional
     WalletDTO.Response update(Long id, WalletDTO.UpdateRequest walletDTO);
