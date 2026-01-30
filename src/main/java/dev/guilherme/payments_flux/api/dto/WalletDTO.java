@@ -26,7 +26,11 @@ public record WalletDTO(
         @NotBlank @CPFCNPJ String cpfCnpj,
         @NotBlank @Email @Size(max = 120) String email,
         @NotBlank @Size(min = 6) String password,
-        @NotNull @Positive BigDecimal balance
+        @NotNull @Positive @Digits(integer = 8, fraction = 2) BigDecimal balance
+    ) {}
+
+    public record MoneyRequest(
+            @NotNull @Positive @Digits(integer = 8, fraction = 2) BigDecimal amount
     ) {}
     
     public record Response(

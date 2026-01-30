@@ -14,4 +14,10 @@ public interface WalletService {
     WalletDTO.Response update(Long id, WalletDTO.UpdateRequest walletDTO);
     
     void delete(Long id);
+
+    @Transactional
+    WalletDTO.Response deposit(Long id, WalletDTO.MoneyRequest depositDTO);
+
+    @Transactional
+    WalletDTO.Response withdraw(Long id, WalletDTO.MoneyRequest withdrawDTO);
 }

@@ -42,4 +42,17 @@ public class WalletController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/deposit/{id}")
+    public ResponseEntity<WalletDTO.Response> deposit(@PathVariable Long id,
+                                                      @RequestBody @Valid WalletDTO.MoneyRequest depositDTO) {
+        WalletDTO.Response response = walletService.deposit(id, depositDTO);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/withdraw/{id}")
+    public ResponseEntity<WalletDTO.Response> withdraw(@PathVariable Long id,
+                                                       @RequestBody @Valid WalletDTO.MoneyRequest withdrawDTO) {
+        WalletDTO.Response response = walletService.withdraw(id, withdrawDTO);
+        return ResponseEntity.ok(response);
+    }
 }
