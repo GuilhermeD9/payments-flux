@@ -9,9 +9,12 @@ import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.domain.repository.TransferRepository;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -54,5 +57,28 @@ public class  TransferServiceImpl implements TransferService {
         Transfer transfer = transferRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Transfer not found", id));
         return transferMapper.toResponse(transfer);
+    }
+
+    @Override
+    public Page<TransferDTO.Response> findAll(Pageable pageable) {
+        return transferRepository.findAll(pageable).map(transferMapper::toResponse);
+    }
+
+    @Override
+    public List<TransferDTO.Response> findBySender(Long id) {
+        List<Transfer> transferBySenderId = transferRepository.findTransferBySenderId(id);
+        if (transferBySenderId.isEmpty()) {
+            throw new ResourceNotFoundException("Transfer by sender not found", id);
+        }
+        return transferBySenderId.stream().map(transferMapper::toResponse).toList();
+    }
+
+    @Override
+    public List<TransferDTO.Response> findByReceiver(Long id) {
+        List<Transfer> transferByReceiverId = transferRepository.findTransferByReceiverId(id);
+        if (transferByReceiverId.isEmpty()) {
+            throw new ResourceNotFoundException("Transfer by receiver not found", id);
+        }
+        return transferByReceiverId.stream().map(transferMapper::toResponse).toList();
     }
 }
