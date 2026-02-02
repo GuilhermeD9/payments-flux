@@ -67,18 +67,12 @@ public class  TransferServiceImpl implements TransferService {
     @Override
     public List<TransferDTO.Response> findBySender(Long id) {
         List<Transfer> transferBySenderId = transferRepository.findTransferBySenderId(id);
-        if (transferBySenderId.isEmpty()) {
-            throw new ResourceNotFoundException("Transfer by sender not found", id);
-        }
         return transferBySenderId.stream().map(transferMapper::toResponse).toList();
     }
 
     @Override
     public List<TransferDTO.Response> findByReceiver(Long id) {
         List<Transfer> transferByReceiverId = transferRepository.findTransferByReceiverId(id);
-        if (transferByReceiverId.isEmpty()) {
-            throw new ResourceNotFoundException("Transfer by receiver not found", id);
-        }
         return transferByReceiverId.stream().map(transferMapper::toResponse).toList();
     }
 }

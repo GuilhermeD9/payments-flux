@@ -17,9 +17,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -170,6 +174,123 @@ public class TransferServiceImplTest {
             );
 
             assertTrue(exception.getMessage().contains("Transfer not found"));
+            verify(transferMapper, never()).toResponse(any());
+        }
+    }
+
+    @Nested
+    class FindAllTransfers {
+        @Test
+        @DisplayName("Should return paginated transfers")
+        void shouldReturnPaginatedTransfers() {
+            List<Transfer> transfers = List.of(
+                new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now()),
+                new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now())
+            );
+            
+            List<TransferDTO.Response> expectedResponses = transfers.stream()
+                .map(t -> new TransferDTO.Response(t.getId(), senderId, receiverId, amount, t.getCreatedAt()))
+                .toList();
+            
+            Page<Transfer> transferPage = new PageImpl<>(transfers);
+            Page<TransferDTO.Response> responsePage = new PageImpl<>(expectedResponses);
+            
+            when(transferRepository.findAll(any(Pageable.class))).thenReturn(transferPage);
+            
+            var result = transferService.findAll(mock(Pageable.class));
+            
+            assertNotNull(result);
+            assertEquals(2, result.getContent().size());
+            verify(transferRepository).findAll(any(Pageable.class));
+        }
+        
+        @Test
+        @DisplayName("Should return empty page when no transfers exist")
+        void shouldReturnEmptyPageWhenNoTransfersExist() {
+            Page<Transfer> emptyPage = new PageImpl<>(List.of());
+            
+            when(transferRepository.findAll(any(Pageable.class))).thenReturn(emptyPage);
+            
+            var result = transferService.findAll(mock(Pageable.class));
+            
+            assertNotNull(result);
+            assertEquals(0, result.getContent().size());
+            verify(transferRepository).findAll(any(Pageable.class));
+        }
+    }
+
+    @Nested
+    class FindTransfersBySender {
+        @Test
+        @DisplayName("Should return transfers by sender ID")
+        void shouldReturnTransfersBySenderId() {
+            List<Transfer> transfers = List.of(
+                new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now()),
+                new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now())
+            );
+            
+            when(transferRepository.findTransferBySenderId(senderId)).thenReturn(transfers);
+            when(transferMapper.toResponse(any())).thenReturn(
+                new TransferDTO.Response(UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now()),
+                new TransferDTO.Response(UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now())
+            );
+            
+            var result = transferService.findBySender(senderId);
+            
+            assertNotNull(result);
+            assertEquals(2, result.size());
+            verify(transferRepository).findTransferBySenderId(senderId);
+            verify(transferMapper, times(2)).toResponse(any());
+        }
+        
+        @Test
+        @DisplayName("Should return empty list when sender has no transfers")
+        void shouldReturnEmptyListWhenSenderHasNoTransfers() {
+            when(transferRepository.findTransferBySenderId(senderId)).thenReturn(List.of());
+            
+            var result = transferService.findBySender(senderId);
+            
+            assertNotNull(result);
+            assertEquals(0, result.size());
+            verify(transferRepository).findTransferBySenderId(senderId);
+            verify(transferMapper, never()).toResponse(any());
+        }
+    }
+
+    @Nested
+    class FindTransfersByReceiver {
+        @Test
+        @DisplayName("Should return transfers by receiver ID")
+        void shouldReturnTransfersByReceiverId() {
+            List<Transfer> transfers = List.of(
+                    new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now()),
+                    new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now())
+            );
+
+            when(transferRepository.findTransferByReceiverId(senderId)).thenReturn(transfers);
+            when(transferMapper.toResponse(any())).thenReturn(
+                    new TransferDTO.Response(UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now()),
+                    new TransferDTO.Response(UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now())
+            );
+
+            var result = transferService.findByReceiver(senderId);
+
+            assertNotNull(result);
+            assertEquals(2, result.size());
+            verify(transferRepository).findTransferByReceiverId(senderId);
+            verify(transferMapper, times(2)).toResponse(any());
+        }
+
+        @Test
+        @DisplayName("Should return empty list when receiver has no transfers")
+        void shouldReturnEmptyListWhenReceiverHasNoTransfers() {
+            when(transferRepository.findTransferByReceiverId(senderId)).thenReturn(List.of());
+
+            var result = transferService.findByReceiver(senderId);
+
+            assertNotNull(result);
+            assertEquals(0, result.size());
+            verify(transferRepository).findTransferByReceiverId(senderId);
             verify(transferMapper, never()).toResponse(any());
         }
     }

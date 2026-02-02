@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,7 +30,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
 class TransferIntegrationTest {
@@ -204,6 +202,149 @@ class TransferIntegrationTest {
 
             mockMvc.perform(get("/v1/api/transfer/find/{id}", nonExistentId))
                     .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    @DisplayName("Find All Transfers Integration Tests")
+    class FindAllTransfersTests {
+        @Test
+        @DisplayName("Should return paginated transfers")
+        void shouldReturnPaginatedTransfers() throws Exception {
+            Transfer transfer1 = new Transfer();
+            transfer1.setSender(sender);
+            transfer1.setReceiver(receiver);
+            transfer1.setAmount(BigDecimal.valueOf(100.00));
+            transfer1.setCreatedAt(LocalDateTime.now());
+            transferRepository.save(transfer1);
+
+            Transfer transfer2 = new Transfer();
+            transfer2.setSender(sender);
+            transfer2.setReceiver(receiver);
+            transfer2.setAmount(BigDecimal.valueOf(200.00));
+            transfer2.setCreatedAt(LocalDateTime.now());
+            transferRepository.save(transfer2);
+
+            mockMvc.perform(get("/v1/api/transfer/findAll")
+                    .param("page", "0")
+                    .param("size", "10")
+                    .param("sort", "createdAt,desc"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.totalElements").value(2))
+                    .andExpect(jsonPath("$.totalPages").value(1))
+                    .andExpect(jsonPath("$.size").value(10));
+        }
+
+        @Test
+        @DisplayName("Should return empty page when no transfers exist")
+        void shouldReturnEmptyPageWhenNoTransfersExist() throws Exception {
+            mockMvc.perform(get("/v1/api/transfer/findAll")
+                    .param("page", "0")
+                    .param("size", "10"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content.length()").value(0))
+                    .andExpect(jsonPath("$.totalElements").value(0));
+        }
+    }
+
+    @Nested
+    @DisplayName("Find Transfers By Sender Integration Tests")
+    class FindTransfersBySenderTests {
+        @Test
+        @DisplayName("Should return transfers by sender ID")
+        void shouldReturnTransfersBySenderId() throws Exception {
+            Transfer transfer1 = new Transfer();
+            transfer1.setSender(sender);
+            transfer1.setReceiver(receiver);
+            transfer1.setAmount(BigDecimal.valueOf(100.00));
+            transfer1.setCreatedAt(LocalDateTime.now());
+            transferRepository.save(transfer1);
+
+            Transfer transfer2 = new Transfer();
+            transfer2.setSender(sender);
+            transfer2.setReceiver(receiver);
+            transfer2.setAmount(BigDecimal.valueOf(200.00));
+            transfer2.setCreatedAt(LocalDateTime.now());
+            transferRepository.save(transfer2);
+
+            mockMvc.perform(get("/v1/api/transfer/find/sender/{senderId}", sender.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(2))
+                    .andExpect(jsonPath("$[0].senderId").value(sender.getId()))
+                    .andExpect(jsonPath("$[1].senderId").value(sender.getId()));
+        }
+
+        @Test
+        @DisplayName("Should return empty list when sender has no transfers")
+        void shouldReturnEmptyListWhenSenderHasNoTransfers() throws Exception {
+            Wallet anotherWallet = new Wallet();
+            anotherWallet.setFullName("Another User");
+            anotherWallet.setCpfCnpj("12345678909");
+            anotherWallet.setEmail("another@email.com");
+            anotherWallet.setPassword("password123");
+            anotherWallet.setBalance(BigDecimal.valueOf(1000.00));
+            anotherWallet = walletRepository.save(anotherWallet);
+
+            mockMvc.perform(get("/v1/api/transfer/find/sender/{senderId}", anotherWallet.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(0));
+        }
+    }
+
+    @Nested
+    @DisplayName("Find Transfers By Receiver Integration Tests")
+    class FindTransfersByReceiverTests {
+        @Test
+        @DisplayName("Should return transfers by receiver ID")
+        void shouldReturnTransfersByReceiverId() throws Exception {
+            Transfer transfer1 = new Transfer();
+            transfer1.setSender(sender);
+            transfer1.setReceiver(receiver);
+            transfer1.setAmount(BigDecimal.valueOf(100.00));
+            transfer1.setCreatedAt(LocalDateTime.now());
+            transferRepository.save(transfer1);
+
+            Transfer transfer2 = new Transfer();
+            transfer2.setSender(sender);
+            transfer2.setReceiver(receiver);
+            transfer2.setAmount(BigDecimal.valueOf(200.00));
+            transfer2.setCreatedAt(LocalDateTime.now());
+            transferRepository.save(transfer2);
+
+            mockMvc.perform(get("/v1/api/transfer/find/receiver/{senderId}", receiver.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(2))
+                    .andExpect(jsonPath("$[0].receiverId").value(receiver.getId()))
+                    .andExpect(jsonPath("$[1].receiverId").value(receiver.getId()));
+        }
+
+        @Test
+        @DisplayName("Should return empty list when receiver has no transfers")
+        void shouldReturnEmptyListWhenReceiverHasNoTransfers() throws Exception {
+            Wallet anotherWallet = new Wallet();
+            anotherWallet.setFullName("Another User");
+            anotherWallet.setCpfCnpj("12345678909");
+            anotherWallet.setEmail("another@email.com");
+            anotherWallet.setPassword("password123");
+            anotherWallet.setBalance(BigDecimal.valueOf(1000.00));
+            anotherWallet = walletRepository.save(anotherWallet);
+
+            mockMvc.perform(get("/v1/api/transfer/find/receiver/{senderId}", anotherWallet.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(0));
         }
     }
 

@@ -1,6 +1,7 @@
 package dev.guilherme.payments_flux.domain.service.wallet;
 
 import dev.guilherme.payments_flux.api.dto.WalletDTO;
+import dev.guilherme.payments_flux.api.exception.BusinessException;
 import dev.guilherme.payments_flux.api.exception.ResourceNotFoundException;
 import dev.guilherme.payments_flux.api.mapper.WalletMapper;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
@@ -17,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -66,7 +68,7 @@ public class WalletServiceImplTest {
 
             when(walletMapper.toEntity(any())).thenReturn(new Wallet());
             when(walletRepository.save(any())).thenReturn(new Wallet(
-                    walletId, fullName, cpfCnpj, email, "212312", BigDecimal.ZERO, version));
+                    walletId, fullName, cpfCnpj, email, password, BigDecimal.ZERO, version));
             when(walletMapper.toResponse(any())).thenReturn(new WalletDTO.Response(
                     walletId, fullName, cpfCnpj, email, BigDecimal.ZERO));
 
@@ -77,7 +79,7 @@ public class WalletServiceImplTest {
             verify(walletRepository).save(walletCaptor.capture());
             Wallet capturedWallet = walletCaptor.getValue();
             assertEquals(BigDecimal.ZERO, capturedWallet.getBalance());
-            verify(passwordEncoder).encode("123100");
+            verify(passwordEncoder).encode(password);
         }
 
         @Test
@@ -138,7 +140,7 @@ public class WalletServiceImplTest {
         @DisplayName("Should update wallet with valid data and return response")
         void shouldUpdateWalletWithValidDataAndReturnResponse() {
             WalletDTO.UpdateRequest updateRequest = new WalletDTO.UpdateRequest(
-                    "Updated Name", cpfCnpj, "updated@email.com", password, balance);
+                    "Updated Name", cpfCnpj, "updated@email.com", password);
 
             Wallet existingWallet = new Wallet(
                     walletId, fullName, cpfCnpj, email, password, balance, version);
@@ -166,7 +168,7 @@ public class WalletServiceImplTest {
         @DisplayName("Should throw ResourceNotFoundException when updating non-existent wallet")
         void shouldThrowResourceNotFoundExceptionWhenUpdatingNonExistentWallet() {
             WalletDTO.UpdateRequest updateRequest = new WalletDTO.UpdateRequest(
-                    fullName, cpfCnpj, email, password, balance);
+                    fullName, cpfCnpj, email, password);
 
             when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
 
@@ -206,6 +208,146 @@ public class WalletServiceImplTest {
 
             assertTrue(exception.getMessage().contains("Wallet not found"));
             verify(walletRepository, never()).deleteById(any());
+        }
+    }
+
+    @Nested
+    class FindAllWallets {
+        @Test
+        @DisplayName("Should return all wallets successfully")
+        void shouldReturnAllWalletsSuccessfully() {
+            List<Wallet> wallets = List.of(
+                new Wallet(walletId, fullName, cpfCnpj, email, password, balance, version),
+                new Wallet(322L, "Jane Doe", "98765432100", "jane@email.com", "pass", BigDecimal.valueOf(200), 1L)
+            );
+            
+            List<WalletDTO.Response> expectedResponses = List.of(
+                new WalletDTO.Response(walletId, fullName, cpfCnpj, email, balance),
+                new WalletDTO.Response(322L, "Jane Doe", "98765432100", "jane@email.com", BigDecimal.valueOf(200))
+            );
+            
+            when(walletRepository.findAll()).thenReturn(wallets);
+            when(walletMapper.toResponse(any())).thenReturn(
+                expectedResponses.get(0),
+                expectedResponses.get(1)
+            );
+            
+            var result = walletService.findAll();
+            
+            assertNotNull(result);
+            assertEquals(2, result.size());
+            verify(walletRepository).findAll();
+            verify(walletMapper, times(2)).toResponse(any());
+        }
+        
+        @Test
+        @DisplayName("Should return empty list when no wallets exist")
+        void shouldReturnEmptyListWhenNoWalletsExist() {
+            when(walletRepository.findAll()).thenReturn(List.of());
+            
+            var result = walletService.findAll();
+            
+            assertNotNull(result);
+            assertEquals(0, result.size());
+            verify(walletRepository).findAll();
+            verify(walletMapper, never()).toResponse(any());
+        }
+    }
+
+    @Nested
+    class DepositMoney {
+        @Test
+        @DisplayName("Should deposit money successfully")
+        void shouldDepositMoneySuccessfully() {
+            Wallet wallet = new Wallet(walletId, fullName, cpfCnpj, email, password, balance, version);
+            WalletDTO.MoneyRequest depositRequest = new WalletDTO.MoneyRequest(BigDecimal.valueOf(50.00));
+            Wallet updatedWallet = new Wallet(walletId, fullName, cpfCnpj, email, password, BigDecimal.valueOf(60.00), version);
+            WalletDTO.Response expectedResponse = new WalletDTO.Response(walletId, fullName, cpfCnpj, email, BigDecimal.valueOf(60.00));
+            
+            when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
+            when(walletRepository.save(any())).thenReturn(updatedWallet);
+            when(walletMapper.toResponse(updatedWallet)).thenReturn(expectedResponse);
+            
+            var result = walletService.deposit(walletId, depositRequest);
+            
+            assertNotNull(result);
+            assertEquals(BigDecimal.valueOf(60.00), result.balance());
+            verify(walletRepository).findById(walletId);
+            verify(walletRepository).save(wallet);
+            assertEquals(BigDecimal.valueOf(60.00), wallet.getBalance());
+        }
+        
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when depositing to non-existent wallet")
+        void shouldThrowResourceNotFoundExceptionWhenDepositingToNonExistentWallet() {
+            WalletDTO.MoneyRequest depositRequest = new WalletDTO.MoneyRequest(BigDecimal.valueOf(50.00));
+            
+            when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
+            
+            ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> walletService.deposit(walletId, depositRequest)
+            );
+            
+            assertTrue(exception.getMessage().contains("Wallet not found"));
+            verify(walletRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    class WithdrawMoney {
+        @Test
+        @DisplayName("Should withdraw money successfully")
+        void shouldWithdrawMoneySuccessfully() {
+            Wallet wallet = new Wallet(walletId, fullName, cpfCnpj, email, password, BigDecimal.valueOf(100.00), version);
+            WalletDTO.MoneyRequest withdrawRequest = new WalletDTO.MoneyRequest(BigDecimal.valueOf(30.00));
+            Wallet updatedWallet = new Wallet(walletId, fullName, cpfCnpj, email, password, BigDecimal.valueOf(70.00), version);
+            WalletDTO.Response expectedResponse = new WalletDTO.Response(walletId, fullName, cpfCnpj, email, BigDecimal.valueOf(70.00));
+            
+            when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
+            when(walletRepository.save(any())).thenReturn(updatedWallet);
+            when(walletMapper.toResponse(updatedWallet)).thenReturn(expectedResponse);
+            
+            var result = walletService.withdraw(walletId, withdrawRequest);
+            
+            assertNotNull(result);
+            assertEquals(BigDecimal.valueOf(70.00), result.balance());
+            verify(walletRepository).findById(walletId);
+            verify(walletRepository).save(wallet);
+            assertEquals(BigDecimal.valueOf(70.00), wallet.getBalance());
+        }
+        
+        @Test
+        @DisplayName("Should throw BusinessException when insufficient balance")
+        void shouldThrowBusinessExceptionWhenInsufficientBalance() {
+            Wallet wallet = new Wallet(walletId, fullName, cpfCnpj, email, password, BigDecimal.valueOf(50.00), version);
+            WalletDTO.MoneyRequest withdrawRequest = new WalletDTO.MoneyRequest(BigDecimal.valueOf(100.00));
+            
+            when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
+            
+            BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> walletService.withdraw(walletId, withdrawRequest)
+            );
+            
+            assertTrue(exception.getMessage().contains("Insufficient balance"));
+            verify(walletRepository, never()).save(any());
+        }
+        
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when withdrawing from non-existent wallet")
+        void shouldThrowResourceNotFoundExceptionWhenWithdrawingFromNonExistentWallet() {
+            WalletDTO.MoneyRequest withdrawRequest = new WalletDTO.MoneyRequest(BigDecimal.valueOf(50.00));
+            
+            when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
+            
+            ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> walletService.withdraw(walletId, withdrawRequest)
+            );
+            
+            assertTrue(exception.getMessage().contains("Wallet not found"));
+            verify(walletRepository, never()).save(any());
         }
     }
 }
