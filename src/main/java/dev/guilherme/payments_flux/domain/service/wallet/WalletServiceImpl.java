@@ -7,6 +7,9 @@ import dev.guilherme.payments_flux.api.mapper.WalletMapper;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,7 @@ public class WalletServiceImpl implements WalletService {
 
 
     @Override
+    @CachePut(value = "WALLET_CACHE", key = "#result.id()")
     public WalletDTO.Response create(WalletDTO.CreateRequest walletDTO) {
         Wallet newWallet = walletMapper.toEntity(walletDTO);
         newWallet.setPassword(passwordEncoder.encode(walletDTO.password()));
@@ -33,6 +37,7 @@ public class WalletServiceImpl implements WalletService {
     }
     
     @Override
+    @Cacheable(value = "WALLET_CACHE", key = "#id")
     public WalletDTO.Response findById(Long id) {
         Wallet wallet = walletRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
@@ -45,6 +50,7 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
+    @CachePut(value = "WALLET_CACHE", key = "#result.id()")
     public WalletDTO.Response update(Long id, WalletDTO.UpdateRequest walletDTO) {
         Wallet wallet = walletRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
@@ -56,6 +62,7 @@ public class WalletServiceImpl implements WalletService {
     }
     
     @Override
+    @CacheEvict(value = "PRODUCT_CACHE", key = "#id")
     public void delete(Long id) {
         if (!walletRepository.existsById(id)) {
             throw new ResourceNotFoundException("Wallet not found", id);
