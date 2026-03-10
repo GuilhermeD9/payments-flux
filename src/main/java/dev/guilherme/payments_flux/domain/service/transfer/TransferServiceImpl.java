@@ -4,11 +4,14 @@ import dev.guilherme.payments_flux.api.dto.TransferDTO;
 import dev.guilherme.payments_flux.api.exception.BusinessException;
 import dev.guilherme.payments_flux.api.exception.ResourceNotFoundException;
 import dev.guilherme.payments_flux.api.mapper.TransferMapper;
+import dev.guilherme.payments_flux.core.constraints.CacheNames;
 import dev.guilherme.payments_flux.domain.entity.Transfer;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.domain.repository.TransferRepository;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ public class  TransferServiceImpl implements TransferService {
     private final TransferMapper transferMapper;
 
     @Override
+    @CachePut(value = CacheNames.TRANSFER, key = "#result.id()")
     public TransferDTO.Response create(TransferDTO.CreateRequest transferDTO) {
         Wallet receiver = walletRepository.findById(transferDTO.receiverId()).orElseThrow(
                 () -> new ResourceNotFoundException("Wallet receiver with id %d not found.", transferDTO.receiverId()));
@@ -53,6 +57,7 @@ public class  TransferServiceImpl implements TransferService {
     }
     
     @Override
+    @Cacheable(value = CacheNames.TRANSFER, key = "#id")
     public TransferDTO.Response findById(UUID id) {
         Transfer transfer = transferRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Transfer not found", id));
@@ -65,12 +70,14 @@ public class  TransferServiceImpl implements TransferService {
     }
 
     @Override
+    @Cacheable(value = CacheNames.TRANSFER, key = "#id")
     public List<TransferDTO.Response> findBySender(Long id) {
         List<Transfer> transferBySenderId = transferRepository.findTransferBySenderId(id);
         return transferBySenderId.stream().map(transferMapper::toResponse).toList();
     }
 
     @Override
+    @Cacheable(value = CacheNames.TRANSFER, key = "#id")
     public List<TransferDTO.Response> findByReceiver(Long id) {
         List<Transfer> transferByReceiverId = transferRepository.findTransferByReceiverId(id);
         return transferByReceiverId.stream().map(transferMapper::toResponse).toList();
