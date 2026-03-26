@@ -3,6 +3,7 @@ package dev.guilherme.payments_flux.domain.service.wallet;
 import dev.guilherme.payments_flux.api.dto.WalletDTO;
 import jakarta.transaction.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface WalletService {
@@ -13,6 +14,8 @@ public interface WalletService {
     WalletDTO.Response findById(Long id);
 
     List<WalletDTO.Response> findAll();
+
+    BigDecimal getBalance(Long id);
 
     @Transactional
     WalletDTO.Response update(Long id, WalletDTO.UpdateRequest walletDTO);

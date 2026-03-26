@@ -10,6 +10,7 @@ import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.domain.repository.TransferRepository;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ public class  TransferServiceImpl implements TransferService {
 
     @Override
     @CachePut(value = CacheNames.TRANSFER, key = "#result.id()")
+    @CacheEvict(value = CacheNames.BALANCE, key = "#id")
     public TransferDTO.Response create(TransferDTO.CreateRequest transferDTO) {
         Wallet receiver = walletRepository.findById(transferDTO.receiverId()).orElseThrow(
                 () -> new ResourceNotFoundException("Wallet receiver with id %d not found.", transferDTO.receiverId()));

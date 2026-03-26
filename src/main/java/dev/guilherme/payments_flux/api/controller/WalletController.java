@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -19,31 +20,37 @@ public class WalletController {
 
     private final WalletService walletService;
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<WalletDTO.Response> create(@RequestBody @Valid WalletDTO.CreateRequest walletDTO) {
         WalletDTO.Response response = walletService.create(walletDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/find/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<WalletDTO.Response> findById(@PathVariable Long id) {
         WalletDTO.Response response = walletService.findById(id);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/findAll")
+    @GetMapping("/balance/{id}")
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long id) {
+        BigDecimal response = walletService.getBalance(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
     public ResponseEntity<List<WalletDTO.Response>> findAll() {
         return ResponseEntity.ok(walletService.findAll());
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<WalletDTO.Response> update(@PathVariable Long id,
                                                      @RequestBody @Valid WalletDTO.UpdateRequest walletDTO) {
         WalletDTO.Response response = walletService.update(id, walletDTO);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         walletService.delete(id);
         return ResponseEntity.noContent().build();
