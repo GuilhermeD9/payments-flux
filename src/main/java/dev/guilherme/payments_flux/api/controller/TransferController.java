@@ -3,7 +3,7 @@ package dev.guilherme.payments_flux.api.controller;
 import dev.guilherme.payments_flux.api.dto.TransferDTO;
 import dev.guilherme.payments_flux.domain.service.transfer.TransferService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +14,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @Validated
@@ -24,31 +23,31 @@ public class TransferController {
 
     private final TransferService transferService;
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<TransferDTO.Response> create(@RequestBody @Valid TransferDTO.CreateRequest transferDTO) {
         TransferDTO.Response response = transferService.create(transferDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/find/{id}")
-    public ResponseEntity<TransferDTO.Response> findById(@PathVariable UUID id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<TransferDTO.Response> findById(@PathVariable String id) {
         TransferDTO.Response response = transferService.findById(id);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/findAll")
+    @GetMapping
     public ResponseEntity<Page<TransferDTO.Response>> findAll(
             @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
         return ResponseEntity.ok(transferService.findAll(pageable));
     }
 
-    @GetMapping("/find/sender/{id}")
-    public ResponseEntity<List<TransferDTO.Response>> findBySender(@PathVariable @Min(0) Long id) {
+    @GetMapping("/sender/{id}")
+    public ResponseEntity<List<TransferDTO.Response>> findBySender(@PathVariable @NotBlank String id) {
         return ResponseEntity.ok(transferService.findBySender(id));
     }
 
-    @GetMapping("/find/receiver/{id}")
-    public ResponseEntity<List<TransferDTO.Response>> findByReceiver(@PathVariable @Min(0) Long id) {
+    @GetMapping("/receiver/{id}")
+    public ResponseEntity<List<TransferDTO.Response>> findByReceiver(@PathVariable @NotBlank String id) {
         return ResponseEntity.ok(transferService.findByReceiver(id));
     }
 }

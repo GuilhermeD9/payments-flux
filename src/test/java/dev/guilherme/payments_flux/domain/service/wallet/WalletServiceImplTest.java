@@ -40,7 +40,7 @@ public class WalletServiceImplTest {
     @InjectMocks
     private WalletServiceImpl walletService;
 
-    Long walletId;
+    String walletId;
     String fullName;
     String cpfCnpj;
     String email;
@@ -50,7 +50,7 @@ public class WalletServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        walletId = 321L;
+        walletId = "321L";
         fullName = "Marcelo Silvano";
         cpfCnpj = "21704662079";
         email = "quialqiuremail@email.com";
@@ -218,12 +218,12 @@ public class WalletServiceImplTest {
         void shouldReturnAllWalletsSuccessfully() {
             List<Wallet> wallets = List.of(
                 new Wallet(walletId, fullName, cpfCnpj, email, password, balance, version),
-                new Wallet(322L, "Jane Doe", "98765432100", "jane@email.com", "pass", BigDecimal.valueOf(200), 1L)
+                new Wallet("322L", "Jane Doe", "98765432100", "jane@email.com", "pass", BigDecimal.valueOf(200), 1L)
             );
             
             List<WalletDTO.Response> expectedResponses = List.of(
                 new WalletDTO.Response(walletId, fullName, cpfCnpj, email, balance),
-                new WalletDTO.Response(322L, "Jane Doe", "98765432100", "jane@email.com", BigDecimal.valueOf(200))
+                new WalletDTO.Response("322L", "Jane Doe", "98765432100", "jane@email.com", BigDecimal.valueOf(200))
             );
             
             when(walletRepository.findAll()).thenReturn(wallets);

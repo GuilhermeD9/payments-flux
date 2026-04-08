@@ -28,7 +28,7 @@ public class RedisConfig {
 
         Map<String, RedisCacheConfiguration> cacheConfig = new HashMap<>();
 
-        cacheConfig.put("wallet-cache",
+        cacheConfig.put("balance-cache",
                 RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
                 .disableCachingNullValues()

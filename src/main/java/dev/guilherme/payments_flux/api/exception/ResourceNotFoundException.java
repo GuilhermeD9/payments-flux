@@ -4,8 +4,8 @@ import java.util.UUID;
 
 public class ResourceNotFoundException extends ServiceException {
 
-  public ResourceNotFoundException(String resource, Long id) {
-    super(String.format("%s with id %d not found", resource, id));
+  public ResourceNotFoundException(String resource, String id) {
+    super(String.format("%s with id %s not found", resource, id));
   }
 
   public ResourceNotFoundException(String resource, UUID id) {

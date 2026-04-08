@@ -1,7 +1,6 @@
 package dev.guilherme.payments_flux.api.controller.transfer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import dev.guilherme.payments_flux.api.controller.BaseIntegrationTest;
 import dev.guilherme.payments_flux.api.dto.TransferDTO;
 import dev.guilherme.payments_flux.domain.entity.Transfer;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
@@ -12,13 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,13 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-@Transactional
-class TransferIntegrationTest {
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+class TransferIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private WalletRepository walletRepository;
@@ -43,16 +30,13 @@ class TransferIntegrationTest {
     @Autowired
     private TransferRepository transferRepository;
 
-    private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
     private Wallet sender;
     private Wallet receiver;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
+        walletRepository.deleteAll();
+        transferRepository.deleteAll();
 
         sender = new Wallet();
         sender.setFullName("Sender User");
@@ -83,7 +67,7 @@ class TransferIntegrationTest {
                 BigDecimal.valueOf(200.00)
             );
 
-            mockMvc.perform(post("/v1/api/transfer/create")
+            mockMvc.perform(post("/v1/api/transfer")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -112,7 +96,7 @@ class TransferIntegrationTest {
                 BigDecimal.valueOf(100.00)
             );
 
-            mockMvc.perform(post("/v1/api/transfer/create")
+            mockMvc.perform(post("/v1/api/transfer")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -129,7 +113,7 @@ class TransferIntegrationTest {
                 BigDecimal.valueOf(2000.00)
             );
 
-            mockMvc.perform(post("/v1/api/transfer/create")
+            mockMvc.perform(post("/v1/api/transfer")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -141,17 +125,17 @@ class TransferIntegrationTest {
         @DisplayName("Should return 404 when sender wallet not found")
         void shouldReturn404WhenSenderWalletNotFound() throws Exception {
             TransferDTO.CreateRequest request = new TransferDTO.CreateRequest(
-                999L,
+                UUID.randomUUID().toString(),
                 receiver.getId(),
                 BigDecimal.valueOf(100.00)
             );
 
-            mockMvc.perform(post("/v1/api/transfer/create")
+            mockMvc.perform(post("/v1/api/transfer")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound());
 
-            assertEquals(0, transferRepository.count());
+            assertEquals(0L, transferRepository.count());
         }
 
         @Test
@@ -159,16 +143,16 @@ class TransferIntegrationTest {
         void shouldReturn404WhenReceiverWalletNotFound() throws Exception {
             TransferDTO.CreateRequest request = new TransferDTO.CreateRequest(
                 sender.getId(),
-                999L,
+                UUID.randomUUID().toString(),
                 BigDecimal.valueOf(100.00)
             );
 
-            mockMvc.perform(post("/v1/api/transfer/create")
+            mockMvc.perform(post("/v1/api/transfer")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound());
 
-            assertEquals(0, transferRepository.count());
+            assertEquals(0L, transferRepository.count());
         }
     }
 
@@ -179,16 +163,16 @@ class TransferIntegrationTest {
         @DisplayName("Should find transfer by ID successfully")
         void shouldFindTransferByIdSuccessfully() throws Exception {
             Transfer transfer = new Transfer();
-            transfer.setSender(sender);
-            transfer.setReceiver(receiver);
+            transfer.setSenderId(sender.getId());
+            transfer.setReceiverId(receiver.getId());
             transfer.setAmount(BigDecimal.valueOf(100.00));
             transfer.setCreatedAt(LocalDateTime.now());
             transfer = transferRepository.save(transfer);
 
-            mockMvc.perform(get("/v1/api/transfer/find/{id}", transfer.getId()))
+            mockMvc.perform(get("/v1/api/transfer/{id}", transfer.getId()))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.id").value(transfer.getId().toString()))
+                    .andExpect(jsonPath("$.id").value(transfer.getId()))
                     .andExpect(jsonPath("$.senderId").value(sender.getId()))
                     .andExpect(jsonPath("$.receiverId").value(receiver.getId()))
                     .andExpect(jsonPath("$.amount").value(100.00))
@@ -200,7 +184,7 @@ class TransferIntegrationTest {
         void shouldReturn404WhenTransferNotFound() throws Exception {
             UUID nonExistentId = UUID.randomUUID();
 
-            mockMvc.perform(get("/v1/api/transfer/find/{id}", nonExistentId))
+            mockMvc.perform(get("/v1/api/transfer/{id}", nonExistentId))
                     .andExpect(status().isNotFound());
         }
     }
@@ -212,20 +196,20 @@ class TransferIntegrationTest {
         @DisplayName("Should return paginated transfers")
         void shouldReturnPaginatedTransfers() throws Exception {
             Transfer transfer1 = new Transfer();
-            transfer1.setSender(sender);
-            transfer1.setReceiver(receiver);
+            transfer1.setSenderId(sender.getId());
+            transfer1.setReceiverId(receiver.getId());
             transfer1.setAmount(BigDecimal.valueOf(100.00));
             transfer1.setCreatedAt(LocalDateTime.now());
             transferRepository.save(transfer1);
 
             Transfer transfer2 = new Transfer();
-            transfer2.setSender(sender);
-            transfer2.setReceiver(receiver);
+            transfer2.setSenderId(sender.getId());
+            transfer2.setReceiverId(receiver.getId());
             transfer2.setAmount(BigDecimal.valueOf(200.00));
             transfer2.setCreatedAt(LocalDateTime.now());
             transferRepository.save(transfer2);
 
-            mockMvc.perform(get("/v1/api/transfer/findAll")
+            mockMvc.perform(get("/v1/api/transfer")
                     .param("page", "0")
                     .param("size", "10")
                     .param("sort", "createdAt,desc"))
@@ -241,7 +225,7 @@ class TransferIntegrationTest {
         @Test
         @DisplayName("Should return empty page when no transfers exist")
         void shouldReturnEmptyPageWhenNoTransfersExist() throws Exception {
-            mockMvc.perform(get("/v1/api/transfer/findAll")
+            mockMvc.perform(get("/v1/api/transfer")
                     .param("page", "0")
                     .param("size", "10"))
                     .andExpect(status().isOk())
@@ -259,20 +243,20 @@ class TransferIntegrationTest {
         @DisplayName("Should return transfers by sender ID")
         void shouldReturnTransfersBySenderId() throws Exception {
             Transfer transfer1 = new Transfer();
-            transfer1.setSender(sender);
-            transfer1.setReceiver(receiver);
+            transfer1.setSenderId(sender.getId());
+            transfer1.setReceiverId(receiver.getId());
             transfer1.setAmount(BigDecimal.valueOf(100.00));
             transfer1.setCreatedAt(LocalDateTime.now());
             transferRepository.save(transfer1);
 
             Transfer transfer2 = new Transfer();
-            transfer2.setSender(sender);
-            transfer2.setReceiver(receiver);
+            transfer2.setSenderId(sender.getId());
+            transfer2.setReceiverId(receiver.getId());
             transfer2.setAmount(BigDecimal.valueOf(200.00));
             transfer2.setCreatedAt(LocalDateTime.now());
             transferRepository.save(transfer2);
 
-            mockMvc.perform(get("/v1/api/transfer/find/sender/{senderId}", sender.getId()))
+            mockMvc.perform(get("/v1/api/transfer/sender/{senderId}", sender.getId()))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$").isArray())
@@ -292,7 +276,7 @@ class TransferIntegrationTest {
             anotherWallet.setBalance(BigDecimal.valueOf(1000.00));
             anotherWallet = walletRepository.save(anotherWallet);
 
-            mockMvc.perform(get("/v1/api/transfer/find/sender/{senderId}", anotherWallet.getId()))
+            mockMvc.perform(get("/v1/api/transfer/sender/{senderId}", anotherWallet.getId()))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$").isArray())
@@ -307,20 +291,20 @@ class TransferIntegrationTest {
         @DisplayName("Should return transfers by receiver ID")
         void shouldReturnTransfersByReceiverId() throws Exception {
             Transfer transfer1 = new Transfer();
-            transfer1.setSender(sender);
-            transfer1.setReceiver(receiver);
+            transfer1.setSenderId(sender.getId());
+            transfer1.setReceiverId(receiver.getId());
             transfer1.setAmount(BigDecimal.valueOf(100.00));
             transfer1.setCreatedAt(LocalDateTime.now());
             transferRepository.save(transfer1);
 
             Transfer transfer2 = new Transfer();
-            transfer2.setSender(sender);
-            transfer2.setReceiver(receiver);
+            transfer2.setSenderId(sender.getId());
+            transfer2.setReceiverId(receiver.getId());
             transfer2.setAmount(BigDecimal.valueOf(200.00));
             transfer2.setCreatedAt(LocalDateTime.now());
             transferRepository.save(transfer2);
 
-            mockMvc.perform(get("/v1/api/transfer/find/receiver/{senderId}", receiver.getId()))
+            mockMvc.perform(get("/v1/api/transfer/receiver/{senderId}", receiver.getId()))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$").isArray())
@@ -340,7 +324,7 @@ class TransferIntegrationTest {
             anotherWallet.setBalance(BigDecimal.valueOf(1000.00));
             anotherWallet = walletRepository.save(anotherWallet);
 
-            mockMvc.perform(get("/v1/api/transfer/find/receiver/{senderId}", anotherWallet.getId()))
+            mockMvc.perform(get("/v1/api/transfer/receiver/{senderId}", anotherWallet.getId()))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$").isArray())
@@ -354,12 +338,12 @@ class TransferIntegrationTest {
         @Test
         @DisplayName("Should validate required fields")
         void shouldValidateRequiredFields() throws Exception {
-            mockMvc.perform(post("/v1/api/transfer/create")
+            mockMvc.perform(post("/v1/api/transfer")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{}"))
                     .andExpect(status().isBadRequest());
 
-            assertEquals(0, transferRepository.count());
+            assertEquals(0L, transferRepository.count());
         }
 
         @Test
@@ -371,12 +355,12 @@ class TransferIntegrationTest {
                 BigDecimal.valueOf(-100.00)
             );
 
-            mockMvc.perform(post("/v1/api/transfer/create")
+            mockMvc.perform(post("/v1/api/transfer")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
 
-            assertEquals(0, transferRepository.count());
+            assertEquals(0L, transferRepository.count());
         }
 
         @Test
@@ -388,12 +372,12 @@ class TransferIntegrationTest {
                 BigDecimal.valueOf(100.123456789)
             );
 
-            mockMvc.perform(post("/v1/api/transfer/create")
+            mockMvc.perform(post("/v1/api/transfer")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
 
-            assertEquals(0, transferRepository.count());
+            assertEquals(0L, transferRepository.count());
         }
     }
 }

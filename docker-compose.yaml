@@ -1,15 +1,14 @@
 services:
-  postgres:
-    container_name: postgres-db
-    image: 'postgres:latest'
-    environment:
-      - 'POSTGRES_DB=payment_db'
-      - 'POSTGRES_USER=postgres'
-      - 'POSTGRES_PASSWORD=secret'
+  mongodb-test:
+    container_name: mongodb-test
+    image: 'mongo:latest'
+    restart: always
     ports:
-      - '5432:5432'
+      - '27018:27017'
     volumes:
-      - postgres-data:/var/lib/postgresql
+      - mongodb-test-data:/data/db
+    environment:
+      - 'MONGO_INITDB_DATABASE=payment_flux_test'
 
   redis:
     container_name: redis-cache
@@ -21,6 +20,7 @@ services:
       - redis-data:/data
 
 volumes:
-  postgres-data:
+  mongodb-test-data:
+    driver: local
   redis-data:
     driver: local

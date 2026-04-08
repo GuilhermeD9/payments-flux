@@ -1,11 +1,11 @@
 package dev.guilherme.payments_flux.core.validator;
 
+import br.com.caelum.stella.validation.CNPJValidator;
+import br.com.caelum.stella.validation.CPFValidator;
 import br.com.caelum.stella.validation.InvalidStateException;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.stereotype.Component;
-import br.com.caelum.stella.validation.CPFValidator;
-import br.com.caelum.stella.validation.CNPJValidator;
 
 @Component
 public class CpfCnpjValidator implements ConstraintValidator<CPFCNPJ, String> {

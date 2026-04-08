@@ -6,6 +6,7 @@ import dev.guilherme.payments_flux.api.exception.ResourceNotFoundException;
 import dev.guilherme.payments_flux.api.mapper.WalletMapper;
 import dev.guilherme.payments_flux.core.constraints.CacheNames;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
+import dev.guilherme.payments_flux.domain.projections.WalletBalanceProjection;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -36,7 +37,7 @@ public class WalletServiceImpl implements WalletService {
     }
     
     @Override
-    public WalletDTO.Response findById(Long id) {
+    public WalletDTO.Response findById(String id) {
         Wallet wallet = walletRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
         return walletMapper.toResponse(wallet);
@@ -49,13 +50,14 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @Cacheable(value = CacheNames.BALANCE, key = "#id")
-    public BigDecimal getBalance(Long id) {
+    public BigDecimal getBalance(String id) {
         return walletRepository.findBalanceById(id)
+                .map(WalletBalanceProjection::balance)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
     }
 
     @Override
-    public WalletDTO.Response update(Long id, WalletDTO.UpdateRequest walletDTO) {
+    public WalletDTO.Response update(String id, WalletDTO.UpdateRequest walletDTO) {
         Wallet wallet = walletRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
         
@@ -67,7 +69,7 @@ public class WalletServiceImpl implements WalletService {
     
     @Override
     @CacheEvict(value = CacheNames.BALANCE, key = "#id")
-    public void delete(Long id) {
+    public void delete(String id) {
         if (!walletRepository.existsById(id)) {
             throw new ResourceNotFoundException("Wallet not found", id);
         }
@@ -76,7 +78,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @CacheEvict(value = CacheNames.BALANCE, key = "#id")
-    public WalletDTO.Response deposit(Long id, WalletDTO.MoneyRequest depositDTO) {
+    public WalletDTO.Response deposit(String id, WalletDTO.MoneyRequest depositDTO) {
         Wallet wallet = walletRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
 
@@ -88,7 +90,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     @CacheEvict(value = CacheNames.BALANCE, key = "#id")
-    public WalletDTO.Response withdraw(Long id, WalletDTO.MoneyRequest withdrawDTO) {
+    public WalletDTO.Response withdraw(String id, WalletDTO.MoneyRequest withdrawDTO) {
         Wallet wallet = walletRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found", id));
 

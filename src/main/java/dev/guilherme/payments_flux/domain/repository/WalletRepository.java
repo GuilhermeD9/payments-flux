@@ -1,16 +1,16 @@
 package dev.guilherme.payments_flux.domain.repository;
 
 import dev.guilherme.payments_flux.domain.entity.Wallet;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import dev.guilherme.payments_flux.domain.projections.WalletBalanceProjection;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 @Repository
-public interface WalletRepository extends JpaRepository<Wallet, Long> {
+public interface WalletRepository extends MongoRepository<Wallet, String> {
 
-    @Query("SELECT w.balance FROM Wallet w WHERE w.id = :id")
-    Optional<BigDecimal> findBalanceById(Long id);
+    @Query(value = "{ '_id' : ?0 }", fields = "{ 'balance' : 1, '_id' : 0 }")
+    Optional<WalletBalanceProjection> findBalanceById(String id);
 }

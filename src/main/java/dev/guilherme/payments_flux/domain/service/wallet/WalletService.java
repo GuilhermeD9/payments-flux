@@ -1,30 +1,25 @@
 package dev.guilherme.payments_flux.domain.service.wallet;
 
 import dev.guilherme.payments_flux.api.dto.WalletDTO;
-import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public interface WalletService {
 
-    @Transactional
     WalletDTO.Response create(WalletDTO.CreateRequest walletDTO);
     
-    WalletDTO.Response findById(Long id);
+    WalletDTO.Response findById(String id);
 
     List<WalletDTO.Response> findAll();
 
-    BigDecimal getBalance(Long id);
+    BigDecimal getBalance(String id);
 
-    @Transactional
-    WalletDTO.Response update(Long id, WalletDTO.UpdateRequest walletDTO);
+    WalletDTO.Response update(String id, WalletDTO.UpdateRequest walletDTO);
     
-    void delete(Long id);
+    void delete(String id);
 
-    @Transactional
-    WalletDTO.Response deposit(Long id, WalletDTO.MoneyRequest depositDTO);
+    WalletDTO.Response deposit(String id, WalletDTO.MoneyRequest depositDTO);
 
-    @Transactional
-    WalletDTO.Response withdraw(Long id, WalletDTO.MoneyRequest withdrawDTO);
+    WalletDTO.Response withdraw(String id, WalletDTO.MoneyRequest withdrawDTO);
 }

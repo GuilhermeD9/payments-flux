@@ -25,7 +25,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,16 +45,18 @@ public class TransferServiceImplTest {
     @InjectMocks
     private TransferServiceImpl transferService;
 
-    private Long senderId;
-    private Long receiverId;
+    private String transferId;
+    private String senderId;
+    private String receiverId;
     private BigDecimal amount;
     private Wallet sender;
     private Wallet receiver;
 
     @BeforeEach
     void setUp() {
-        senderId = 1L;
-        receiverId = 2L;
+        transferId = "31221L";
+        senderId = "1L";
+        receiverId = "2L";
         amount = new BigDecimal("100.00");
         sender = new Wallet();
         receiver = new Wallet();
@@ -84,9 +85,9 @@ public class TransferServiceImplTest {
             when(walletRepository.findById(receiverId)).thenReturn(Optional.of(receiver));
             when(transferMapper.toEntity(requestDTO)).thenReturn(transferEntity);
             when(transferRepository.save(any())).thenReturn(new Transfer(
-                    UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now()));
+                    "323291L", senderId, receiverId, amount, LocalDateTime.now()));
             when(transferMapper.toResponse(any())).thenReturn(new TransferDTO.Response(
-                    UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now()));
+                    "323291L", senderId, receiverId, amount, LocalDateTime.now()));
 
             var response = transferService.create(requestDTO);
 
@@ -150,22 +151,20 @@ public class TransferServiceImplTest {
         @Test
         @DisplayName("Should find transfer by ID and return response")
         void shouldFindTransferByIdAndReturnResponse() {
-            var id = UUID.randomUUID();
-            var expectedResponse = new TransferDTO.Response(id, senderId, receiverId, amount, LocalDateTime.now());
+            var expectedResponse = new TransferDTO.Response(transferId, senderId, receiverId, amount, LocalDateTime.now());
 
-            when(transferRepository.findById(id)).thenReturn(Optional.of(new Transfer()));
+            when(transferRepository.findById(transferId)).thenReturn(Optional.of(new Transfer()));
             when(transferMapper.toResponse(any())).thenReturn(expectedResponse);
 
-            var response = transferService.findById(id);
+            var response = transferService.findById(transferId);
 
             assertEquals(expectedResponse, response);
-            verify(transferRepository).findById(id);
+            verify(transferRepository).findById(transferId);
         }
 
         @Test
         @DisplayName("Should throw ResourceNotFoundException when transfer not found")
         void shouldThrowResourceNotFoundExceptionWhenTransferNotFound() {
-            UUID transferId = UUID.randomUUID();
 
             when(transferRepository.findById(transferId)).thenReturn(Optional.empty());
 
@@ -184,16 +183,11 @@ public class TransferServiceImplTest {
         @DisplayName("Should return paginated transfers")
         void shouldReturnPaginatedTransfers() {
             List<Transfer> transfers = List.of(
-                new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now()),
-                new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now())
+                new Transfer(transferId, senderId, receiverId, amount, LocalDateTime.now()),
+                new Transfer("12345L", senderId, receiverId, amount, LocalDateTime.now())
             );
             
-            List<TransferDTO.Response> expectedResponses = transfers.stream()
-                .map(t -> new TransferDTO.Response(t.getId(), senderId, receiverId, amount, t.getCreatedAt()))
-                .toList();
-            
             Page<Transfer> transferPage = new PageImpl<>(transfers);
-            Page<TransferDTO.Response> responsePage = new PageImpl<>(expectedResponses);
             
             when(transferRepository.findAll(any(Pageable.class))).thenReturn(transferPage);
             
@@ -225,14 +219,14 @@ public class TransferServiceImplTest {
         @DisplayName("Should return transfers by sender ID")
         void shouldReturnTransfersBySenderId() {
             List<Transfer> transfers = List.of(
-                new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now()),
-                new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now())
+                new Transfer(transferId, senderId, receiverId, amount, LocalDateTime.now()),
+                new Transfer("12345L", senderId, receiverId, amount, LocalDateTime.now())
             );
             
             when(transferRepository.findTransferBySenderId(senderId)).thenReturn(transfers);
             when(transferMapper.toResponse(any())).thenReturn(
-                new TransferDTO.Response(UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now()),
-                new TransferDTO.Response(UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now())
+                new TransferDTO.Response(transferId, senderId, receiverId, amount, LocalDateTime.now()),
+                new TransferDTO.Response("12345L", senderId, receiverId, amount, LocalDateTime.now())
             );
             
             var result = transferService.findBySender(senderId);
@@ -263,14 +257,14 @@ public class TransferServiceImplTest {
         @DisplayName("Should return transfers by receiver ID")
         void shouldReturnTransfersByReceiverId() {
             List<Transfer> transfers = List.of(
-                    new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now()),
-                    new Transfer(UUID.randomUUID(), sender, receiver, amount, LocalDateTime.now())
+                    new Transfer(transferId, senderId, receiverId, amount, LocalDateTime.now()),
+                    new Transfer("12345L", senderId, receiverId, amount, LocalDateTime.now())
             );
 
             when(transferRepository.findTransferByReceiverId(senderId)).thenReturn(transfers);
             when(transferMapper.toResponse(any())).thenReturn(
-                    new TransferDTO.Response(UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now()),
-                    new TransferDTO.Response(UUID.randomUUID(), senderId, receiverId, amount, LocalDateTime.now())
+                    new TransferDTO.Response(transferId, senderId, receiverId, amount, LocalDateTime.now()),
+                    new TransferDTO.Response("12345L", senderId, receiverId, amount, LocalDateTime.now())
             );
 
             var result = transferService.findByReceiver(senderId);

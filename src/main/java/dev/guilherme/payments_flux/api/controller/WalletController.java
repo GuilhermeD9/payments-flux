@@ -27,13 +27,13 @@ public class WalletController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WalletDTO.Response> findById(@PathVariable Long id) {
+    public ResponseEntity<WalletDTO.Response> findById(@PathVariable String id) {
         WalletDTO.Response response = walletService.findById(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/balance/{id}")
-    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long id) {
+    public ResponseEntity<BigDecimal> getBalance(@PathVariable String id) {
         BigDecimal response = walletService.getBalance(id);
         return ResponseEntity.ok(response);
     }
@@ -44,27 +44,27 @@ public class WalletController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<WalletDTO.Response> update(@PathVariable Long id,
+    public ResponseEntity<WalletDTO.Response> update(@PathVariable String id,
                                                      @RequestBody @Valid WalletDTO.UpdateRequest walletDTO) {
         WalletDTO.Response response = walletService.update(id, walletDTO);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         walletService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/deposit/{id}")
-    public ResponseEntity<WalletDTO.Response> deposit(@PathVariable Long id,
+    public ResponseEntity<WalletDTO.Response> deposit(@PathVariable String id,
                                                       @RequestBody @Valid WalletDTO.MoneyRequest depositDTO) {
         WalletDTO.Response response = walletService.deposit(id, depositDTO);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/withdraw/{id}")
-    public ResponseEntity<WalletDTO.Response> withdraw(@PathVariable Long id,
+    public ResponseEntity<WalletDTO.Response> withdraw(@PathVariable String id,
                                                        @RequestBody @Valid WalletDTO.MoneyRequest withdrawDTO) {
         WalletDTO.Response response = walletService.withdraw(id, withdrawDTO);
         return ResponseEntity.ok(response);

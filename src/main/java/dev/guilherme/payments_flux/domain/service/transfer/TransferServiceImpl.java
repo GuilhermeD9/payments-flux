@@ -16,10 +16,10 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -31,7 +31,8 @@ public class  TransferServiceImpl implements TransferService {
 
     @Override
     @CachePut(value = CacheNames.TRANSFER, key = "#result.id()")
-    @CacheEvict(value = CacheNames.BALANCE, key = "#id")
+    @CacheEvict(value = CacheNames.BALANCE, key = "#transferDTO.senderId() + ',' + #transferDTO.receiverId()")
+    @Transactional
     public TransferDTO.Response create(TransferDTO.CreateRequest transferDTO) {
         Wallet receiver = walletRepository.findById(transferDTO.receiverId()).orElseThrow(
                 () -> new ResourceNotFoundException("Wallet receiver with id %d not found.", transferDTO.receiverId()));
@@ -45,13 +46,14 @@ public class  TransferServiceImpl implements TransferService {
         if (sender.getBalance().compareTo(transferDTO.amount()) >= 0) {
             sender.setBalance(sender.getBalance().subtract(transferDTO.amount()));
             receiver.setBalance(receiver.getBalance().add(transferDTO.amount()));
+            walletRepository.saveAll(List.of(sender, receiver));
         } else {
             throw new BusinessException("Insufficient balance for transfer.");
         }
 
         Transfer newTransfer = transferMapper.toEntity(transferDTO);
-        newTransfer.setSender(sender);
-        newTransfer.setReceiver(receiver);
+        newTransfer.setSenderId(sender.getId());
+        newTransfer.setReceiverId(receiver.getId());
         newTransfer.setCreatedAt(LocalDateTime.now());
         transferRepository.save(newTransfer);
 
@@ -60,7 +62,7 @@ public class  TransferServiceImpl implements TransferService {
     
     @Override
     @Cacheable(value = CacheNames.TRANSFER, key = "#id")
-    public TransferDTO.Response findById(UUID id) {
+    public TransferDTO.Response findById(String id) {
         Transfer transfer = transferRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Transfer not found", id));
         return transferMapper.toResponse(transfer);
@@ -73,14 +75,14 @@ public class  TransferServiceImpl implements TransferService {
 
     @Override
     @Cacheable(value = CacheNames.TRANSFER, key = "#id")
-    public List<TransferDTO.Response> findBySender(Long id) {
+    public List<TransferDTO.Response> findBySender(String id) {
         List<Transfer> transferBySenderId = transferRepository.findTransferBySenderId(id);
         return transferBySenderId.stream().map(transferMapper::toResponse).toList();
     }
 
     @Override
     @Cacheable(value = CacheNames.TRANSFER, key = "#id")
-    public List<TransferDTO.Response> findByReceiver(Long id) {
+    public List<TransferDTO.Response> findByReceiver(String id) {
         List<Transfer> transferByReceiverId = transferRepository.findTransferByReceiverId(id);
         return transferByReceiverId.stream().map(transferMapper::toResponse).toList();
     }

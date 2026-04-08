@@ -6,7 +6,7 @@ import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
 public record WalletDTO(
-    Long id,
+    String id,
     @NotBlank String fullName,
     @NotBlank @CPFCNPJ String cpfCnpj,
     @NotBlank @Email @Size(max = 120) String email,
@@ -19,21 +19,29 @@ public record WalletDTO(
         @NotBlank @CPFCNPJ String cpfCnpj,
         @NotBlank @Email @Size(max = 40) String email,
         @NotBlank @Size(min = 6) String password
-    ) {}
+    ) {
+        public CreateRequest {
+            cpfCnpj = (cpfCnpj != null) ? cpfCnpj.replaceAll("\\D", "") : null;
+        }
+    }
     
     public record UpdateRequest(
         @NotBlank String fullName,
         @NotBlank @CPFCNPJ String cpfCnpj,
         @NotBlank @Email @Size(max = 120) String email,
         @NotBlank @Size(min = 6) String password
-    ) {}
+    ) {
+        public UpdateRequest {
+            cpfCnpj = (cpfCnpj != null) ? cpfCnpj.replaceAll("\\D", "") : null;
+        }
+    }
 
     public record MoneyRequest(
             @NotNull @Positive @Digits(integer = 8, fraction = 2) BigDecimal amount
     ) {}
     
     public record Response(
-        Long id,
+        String id,
         String fullName,
         String cpfCnpj,
         String email,

@@ -1,7 +1,6 @@
 package dev.guilherme.payments_flux.api.controller.wallet;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import dev.guilherme.payments_flux.api.controller.BaseIntegrationTest;
 import dev.guilherme.payments_flux.api.dto.WalletDTO;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
@@ -10,13 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
 
@@ -24,25 +17,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-@Transactional
-class WalletIntegrationTest {
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+class WalletIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private WalletRepository walletRepository;
 
-    private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
-
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
+        walletRepository.deleteAll();
     }
 
     @Nested
@@ -57,7 +39,7 @@ class WalletIntegrationTest {
                 "password123"
             );
 
-            mockMvc.perform(post("/v1/api/wallet/create")
+            mockMvc.perform(post("/v1/api/wallet")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated())
@@ -81,7 +63,7 @@ class WalletIntegrationTest {
                 ""
             );
 
-            mockMvc.perform(post("/v1/api/wallet/create")
+            mockMvc.perform(post("/v1/api/wallet")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(invalidRequest)))
                     .andExpect(status().isBadRequest());
@@ -99,7 +81,7 @@ class WalletIntegrationTest {
                 "password123"
             );
 
-            mockMvc.perform(post("/v1/api/wallet/create")
+            mockMvc.perform(post("/v1/api/wallet")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -117,7 +99,7 @@ class WalletIntegrationTest {
                 "password123"
             );
 
-            mockMvc.perform(post("/v1/api/wallet/create")
+            mockMvc.perform(post("/v1/api/wallet")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -135,7 +117,7 @@ class WalletIntegrationTest {
                 "123"
             );
 
-            mockMvc.perform(post("/v1/api/wallet/create")
+            mockMvc.perform(post("/v1/api/wallet")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -151,13 +133,13 @@ class WalletIntegrationTest {
         void shouldFindWalletByIdSuccessfully() throws Exception {
             Wallet wallet = new Wallet();
             wallet.setFullName("John Doe");
-            wallet.setCpfCnpj("150.846.050-78");
+            wallet.setCpfCnpj("15084605078");
             wallet.setEmail("john.doe@email.com");
             wallet.setPassword("password123");
             wallet.setBalance(BigDecimal.valueOf(100.00));
             wallet = walletRepository.save(wallet);
 
-            mockMvc.perform(get("/v1/api/wallet/find/{id}", wallet.getId()))
+            mockMvc.perform(get("/v1/api/wallet/{id}", wallet.getId()))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id").value(wallet.getId()))
@@ -196,7 +178,7 @@ class WalletIntegrationTest {
                 "newpassword123"
             );
 
-            mockMvc.perform(put("/v1/api/wallet/update/{id}", wallet.getId())
+            mockMvc.perform(put("/v1/api/wallet/{id}", wallet.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(updateRequest)))
                     .andExpect(status().isOk())
@@ -241,7 +223,7 @@ class WalletIntegrationTest {
                 ""
             );
 
-            mockMvc.perform(put("/v1/api/wallet/update/{id}", wallet.getId())
+            mockMvc.perform(put("/v1/api/wallet/{id}", wallet.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(invalidRequest)))
                     .andExpect(status().isBadRequest());
@@ -262,7 +244,7 @@ class WalletIntegrationTest {
             wallet.setBalance(BigDecimal.valueOf(100.00));
             wallet = walletRepository.save(wallet);
 
-            mockMvc.perform(delete("/v1/api/wallet/delete/{id}", wallet.getId()))
+            mockMvc.perform(delete("/v1/api/wallet/{id}", wallet.getId()))
                     .andExpect(status().isNoContent());
 
             assertEquals(0, walletRepository.count());
@@ -298,7 +280,7 @@ class WalletIntegrationTest {
             wallet2.setBalance(BigDecimal.valueOf(200.00));
             walletRepository.save(wallet2);
 
-            mockMvc.perform(get("/v1/api/wallet/findAll"))
+            mockMvc.perform(get("/v1/api/wallet"))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$").isArray())
@@ -310,7 +292,7 @@ class WalletIntegrationTest {
         @Test
         @DisplayName("Should return empty list when no wallets exist")
         void shouldReturnEmptyListWhenNoWalletsExist() throws Exception {
-            mockMvc.perform(get("/v1/api/wallet/findAll"))
+            mockMvc.perform(get("/v1/api/wallet"))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$").isArray())

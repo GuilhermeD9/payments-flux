@@ -2,16 +2,9 @@ spring:
   application:
     name: payments-flux
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/payment_db
-    username: postgres
-    password: secret
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-      dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+  mongodb:
+    uri: ${MONGODB_URI}
+    auto-index-creation: true
 
   redis:
     host: localhost

@@ -1,5 +1,6 @@
 package dev.guilherme.payments_flux.api.controller.transfer;
 
+import dev.guilherme.payments_flux.api.controller.BaseIntegrationTest;
 import dev.guilherme.payments_flux.api.dto.TransferDTO;
 import dev.guilherme.payments_flux.domain.entity.Wallet;
 import dev.guilherme.payments_flux.domain.repository.WalletRepository;
@@ -7,13 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,21 +19,13 @@ import java.util.concurrent.CompletableFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
-class TransferConcurrencyIT {
-
-    @Autowired
-    private MockMvc mockMvc;
+class TransferConcurrencyIT extends BaseIntegrationTest {
 
     @Autowired
     private WalletRepository walletRepository;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private Long senderId;
-    private Long receiverId;
+    private String senderId;
+    private String receiverId;
 
     @BeforeEach
     void setup() {
@@ -47,7 +36,7 @@ class TransferConcurrencyIT {
         sender.setCpfCnpj("23453212322");
         sender.setPassword("abobora");
         sender.setBalance(BigDecimal.valueOf(100.00));
-        sender = walletRepository.save(sender);
+        walletRepository.save(sender);
         this.senderId = sender.getId();
 
         Wallet receiver = new Wallet();
@@ -55,7 +44,7 @@ class TransferConcurrencyIT {
         receiver.setCpfCnpj("23453212321");
         receiver.setPassword("passo");
         receiver.setBalance(BigDecimal.ZERO);
-        receiver = walletRepository.save(receiver);
+        walletRepository.save(receiver);
         this.receiverId = receiver.getId();
     }
 
@@ -69,7 +58,7 @@ class TransferConcurrencyIT {
 
         CompletableFuture<ResultActions> call1 = CompletableFuture.supplyAsync(() -> {
             try {
-                return mockMvc.perform(post("/v1/api/transfer/create")
+                return mockMvc.perform(post("/v1/api/transfer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest));
             } catch (Exception e) {
@@ -79,7 +68,7 @@ class TransferConcurrencyIT {
 
         CompletableFuture<ResultActions> call2 = CompletableFuture.supplyAsync(() -> {
             try {
-                return mockMvc.perform(post("/v1/api/transfer/create")
+                return mockMvc.perform(post("/v1/api/transfer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonRequest));
             } catch (Exception e) {
