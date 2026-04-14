@@ -74,14 +74,14 @@ public class  TransferServiceImpl implements TransferService {
     }
 
     @Override
-    @Cacheable(value = CacheNames.TRANSFER, key = "#id")
+    @Cacheable(value = CacheNames.TRANSFER, key = "'sender:' + #id")
     public List<TransferDTO.Response> findBySender(String id) {
         List<Transfer> transferBySenderId = transferRepository.findTransferBySenderId(id);
         return transferBySenderId.stream().map(transferMapper::toResponse).toList();
     }
 
     @Override
-    @Cacheable(value = CacheNames.TRANSFER, key = "#id")
+    @Cacheable(value = CacheNames.TRANSFER, key = "'receiver:' + #id")
     public List<TransferDTO.Response> findByReceiver(String id) {
         List<Transfer> transferByReceiverId = transferRepository.findTransferByReceiverId(id);
         return transferByReceiverId.stream().map(transferMapper::toResponse).toList();

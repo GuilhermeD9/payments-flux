@@ -11,6 +11,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class RedisConfig {
 
         JacksonJsonRedisSerializer<WalletDTO.Response> walletSerializer = new JacksonJsonRedisSerializer<>(WalletDTO.Response.class);
         JacksonJsonRedisSerializer<TransferDTO.Response> transferSerializer = new JacksonJsonRedisSerializer<>(TransferDTO.Response.class);
+        JacksonJsonRedisSerializer<BigDecimal> balanceSerializer = new JacksonJsonRedisSerializer<>(BigDecimal.class);
 
         Map<String, RedisCacheConfiguration> cacheConfig = new HashMap<>();
 
@@ -33,11 +35,11 @@ public class RedisConfig {
                 .entryTtl(Duration.ofMinutes(10))
                 .disableCachingNullValues()
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(walletSerializer)));
+                        .fromSerializer(balanceSerializer)));
 
         cacheConfig.put("transfer-cache",
                 RedisCacheConfiguration.defaultCacheConfig()
-                        .entryTtl(Duration.ofMinutes(15))
+                        .entryTtl(Duration.ofMinutes(5))
                         .disableCachingNullValues()
                         .serializeValuesWith(RedisSerializationContext.SerializationPair
                                 .fromSerializer(transferSerializer)));
