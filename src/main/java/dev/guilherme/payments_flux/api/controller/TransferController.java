@@ -50,4 +50,9 @@ public class TransferController {
     public ResponseEntity<List<TransferDTO.Response>> findByReceiver(@PathVariable @NotBlank String id) {
         return ResponseEntity.ok(transferService.findByReceiver(id));
     }
+
+    @GetMapping("/summary")
+    public ResponseEntity<List<TransferDTO.FinancialSummary>> getDailySummary(@RequestBody @Valid TransferDTO.FinancialSummaryRequest request) {
+        return ResponseEntity.ok(transferService.getFinancialSummary(request));
+    }
 }

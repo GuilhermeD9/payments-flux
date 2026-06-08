@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -85,5 +86,10 @@ public class  TransferServiceImpl implements TransferService {
     public List<TransferDTO.Response> findByReceiver(String id) {
         List<Transfer> transferByReceiverId = transferRepository.findTransferByReceiverId(id);
         return transferByReceiverId.stream().map(transferMapper::toResponse).toList();
+    }
+
+    @Override
+    public List<TransferDTO.FinancialSummary> getFinancialSummary(TransferDTO.FinancialSummaryRequest request) {
+        return transferRepository.getFinancialSummary(request.startDate(), request.endDate());
     }
 }

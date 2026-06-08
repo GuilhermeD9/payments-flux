@@ -17,4 +17,6 @@ public interface TransferService {
     List<TransferDTO.Response> findBySender(String id);
 
     List<TransferDTO.Response> findByReceiver(String id);
+
+    List<TransferDTO.FinancialSummary> getFinancialSummary(TransferDTO.FinancialSummaryRequest request);
 }

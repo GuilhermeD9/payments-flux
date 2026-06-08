@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record TransferDTO(
@@ -21,6 +22,11 @@ public record TransferDTO(
         @NotBlank String receiverId,
         @NotNull @Positive @Digits(integer = 8, fraction = 2) BigDecimal amount
     ) {}
+
+    public record FinancialSummaryRequest(
+        @NotNull LocalDate startDate,
+        @NotNull LocalDate endDate
+    ) {}
     
     public record Response(
         String id,
@@ -28,5 +34,11 @@ public record TransferDTO(
         String receiverId,
         BigDecimal amount,
         LocalDateTime createdAt
+    ) {}
+
+    public record FinancialSummary(
+        String operationType,
+        BigDecimal totalAmount,
+        Integer count
     ) {}
 }
