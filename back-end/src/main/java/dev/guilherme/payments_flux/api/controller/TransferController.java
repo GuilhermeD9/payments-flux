@@ -51,7 +51,7 @@ public class TransferController {
         return ResponseEntity.ok(transferService.findByReceiver(id));
     }
 
-    @GetMapping("/summary")
+    @PostMapping("/summary")
     public ResponseEntity<List<TransferDTO.FinancialSummary>> getDailySummary(@RequestBody @Valid TransferDTO.FinancialSummaryRequest request) {
         return ResponseEntity.ok(transferService.getFinancialSummary(request));
     }
