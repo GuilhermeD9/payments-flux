@@ -3,7 +3,7 @@ spring:
     name: payments-flux
 
   mongodb:
-    uri: ${MONGODB_URI}
+    uri: mongodb://localhost:27018/payment_flux_test
     auto-index-creation: true
 
   redis:
