@@ -3,7 +3,12 @@ export const useWallets = () => {
     const apiBase = 'http://localhost:8080/v1/api/wallet'
 
     const fetchWallets = async () => {
-        return await $fetch<any[]>(apiBase)
+        try {
+            return await $fetch<any[]>(apiBase)
+        } catch (error) {
+            console.error('Erro ao carregar carteiras:', error)
+            throw new Error('Não foi possível carregar as carteiras.')
+        }
     }
 
     const fetchWalletById = async (id: string) => {
