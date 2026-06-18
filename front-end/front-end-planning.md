@@ -16,7 +16,7 @@ No diretório `front-end/`, crie as pastas das três camadas que planejamos:
 
 Comando para criar as pastas de uma vez no terminal:
 ```bash
-mkdir -p layers/core/components layers/core/layouts layers/wallets/pages/wallets layers/wallets/components layers/transfers/pages/transfers layers/transfers/components
+mkdir -p layers/core/{components,layouts,composables} layers/wallets/{pages,components,composables} layers/transfers/{pages,components,composables} app/pages
 ```
 
 ### Passo 1.2: Configurar o `nuxt.config.ts` principal
@@ -41,6 +41,12 @@ export default defineNuxtConfig({
 
 ### Passo 1.3: Inicializar o arquivo `nuxt.config.ts` de cada camada
 Cada camada precisa ter seu próprio arquivo de configuração (mesmo que vazio) para o Nuxt identificá-la.
+
+**Importante:** Certifique-se de que as camadas estão localizadas em:
+- `layers/core/` (não dentro de `app/`)
+- `layers/wallets/` (não dentro de `app/`)
+- `layers/transfers/` (não dentro de `app/`)
+
 Crie os arquivos:
 1. `layers/core/nuxt.config.ts`
 2. `layers/wallets/nuxt.config.ts`
@@ -101,6 +107,9 @@ Nesta fase, implementaremos o CRUD de Carteiras, além dos modais para depósito
 
 ### Passo 2.1: Criar o Composable de Conexão com a API (`useWallets.ts`)
 Vamos centralizar as requisições de carteira em um composable do Nuxt (um arquivo utilitário de estado).
+
+**Localização:** Os composables de wallets devem ficar em `layers/wallets/composables/` (não em `app/layers/`).
+
 Crie o arquivo `layers/wallets/composables/useWallets.ts`:
 ```typescript
 export const useWallets = () => {
@@ -148,13 +157,15 @@ export const useWallets = () => {
 
 ### Passo 2.2: Criar a Página de Listagem de Carteiras
 Crie a tela onde todas as carteiras serão exibidas em um grid moderno.
-Crie o arquivo `layers/wallets/pages/wallets/index.vue`:
+Crie o arquivo `layers/wallets/pages/index.vue`:
 *   *Função:* Exibir as contas, saldos e botões rápidos para depositar/sacar.
+*   *Rota:* Será acessível em `/wallets`
 
 ### Passo 2.3: Criar a Tela de Criação de Carteira
 Crie o formulário de cadastro de carteiras.
-Crie o arquivo `layers/wallets/pages/wallets/create.vue`:
+Crie o arquivo `layers/wallets/pages/create.vue`:
 *   *Função:* Formulário com validação de CPF/CNPJ e envio de dados para o Spring Boot.
+*   *Rota:* Será acessível em `/wallets/create`
 
 ---
 
@@ -166,20 +177,24 @@ Nesta fase, permitiremos enviar dinheiro entre contas e listar as transferência
 Crie o arquivo `layers/transfers/composables/useTransfers.ts` com as chamadas de API:
 *   `POST /v1/api/transfer` (Criar transferência)
 *   `GET /v1/api/transfer` (Histórico paginado)
-*   `POST /v1/api/transfer/summary` (Resumo financeiro diário)
-
-### Passo 3.2: Criar a Tela de Envio de Transferência
-Crie o formulário em `layers/transfers/pages/transfers/new.vue`:
+*   `POST /v1/api/transfer/summary` (Resumo fnew.vue`:
 *   *Função:* Escolher remetente (Sender), destinatário (Receiver), valor e efetivar a transação. O front-end deve checar se a carteira de origem tem saldo suficiente antes de enviar.
+*   *Rota:* Será acessível em `/transfers/new`
 
+### Passo 3.3: Criar a Tela de Histórico de Transações
+Crie o histórico em `layers/transfers/pages/index.vue`:
+*   *Função:* Tabela moderna com todas as transferências salvas no MongoDB do backend.
+*   *Rota:* Será acessível em `/transfers`
 ### Passo 3.3: Criar a Tela de Histórico de Transações
 Crie o histórico em `layers/transfers/pages/transfers/index.vue`:
 *   *Função:* Tabela moderna com todas as transferências salvas no MongoDB do backend.
 
----
-
-## 📊 Fase 4: Dashboard e Gráficos
-
+---em `app/pages/index.vue`:
+*   *Localização:* Na app principal (`app/pages/`, não em uma layer).
+*   Exibir o saldo total consolidado de todas as carteiras.
+*   Exibir atalhos visuais (botões de ação rápida).
+*   Mostrar um resumo diário dos valores movimentados usando uma biblioteca gráfica como `Chart.js` ou `ApexCharts`.
+*   *Rota:* Será acessível em `/`
 ### Passo 4.1: Criar a Home do Painel (`pages/index.vue`)
 Crie a página principal de entrada (`pages/index.vue`) na raiz do frontend ou na camada core:
 *   Exibir o saldo total consolidado de todas as carteiras.
